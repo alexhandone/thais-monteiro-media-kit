@@ -1,0 +1,8 @@
+<svg width="240" height="240" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">TM Monogram</title>
+  <desc id="desc">Light editorial fashion monogram for Thais Monteiro</desc>
+  <rect x="18" y="18" width="204" height="204" rx="102" stroke="#F4F1EC" stroke-opacity="0.25" stroke-width="1.5"/>
+  <rect x="32" y="32" width="176" height="176" rx="88" stroke="#EF1F3D" stroke-opacity="0.72" stroke-width="1"/>
+  <text x="118" y="139" text-anchor="middle" fill="#F4F1EC" font-family="Cormorant Garamond, Didot, Bodoni 72, Georgia, serif" font-size="91" font-weight="500" letter-spacing="-7">TM</text>
+  <path d="M74 166H166" stroke="#EF1F3D" stroke-width="2"/>
+</svg>

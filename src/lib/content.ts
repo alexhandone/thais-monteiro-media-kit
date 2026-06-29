@@ -1,0 +1,62 @@
+export const siteContent = {
+  name: "Thais Monteiro",
+  handle: "@thais.msilva",
+  location: "Osasco, SP",
+  title: "Lifestyle, maternidade e rotina real",
+  intro:
+    "Criadora de conteúdo digital que compartilha rotina real, maternidade, moda, família e empreendedorismo feminino com leveza, humor e autenticidade.",
+  bio:
+    "Thais Monteiro, 28 anos, é criadora de conteúdo digital, casada e residente em Osasco. Seu conteúdo nasce do cotidiano: momentos simples, desafios, conquistas e experiências que geram identificação genuína com seu público.",
+  differentials: [
+    "Comunicação com humor e leveza",
+    "Alta identificação com o público feminino",
+    "Storytelling persuasivo",
+    "Autoridade em maternidade e lifestyle",
+    "Experiência com marcas reconhecidas",
+  ],
+  interests: [
+    "Maternidade",
+    "Lifestyle e rotina real",
+    "Moda e beleza",
+    "Vida em família",
+    "Empreendedorismo feminino",
+  ],
+  partners: [
+    "@casadonortemedina",
+    "@gestarporproposito",
+    "@dra.mileneribeiro",
+    "@goldspellcosmeticos",
+    "@studiotgfotos",
+    "@alinemoreira_studiobeauty",
+    "@belarigelato",
+    "@lesantosfotografia",
+    "@altiorastudioo",
+    "@projeart_expo",
+    "@bloompilatesfisio",
+    "@magnaalvesimportados",
+    "@studio_thay_santos",
+  ],
+  deliverables: [
+    "Reels estrategico",
+    "Campanhas mensais",
+    "Presença em eventos",
+    "Unboxing",
+    "Reviews detalhadas",
+    "Embaixadora",
+    "Sequencia de stories com link",
+    "Estratégia personalizada",
+  ],
+  metricsCta: {
+    eyebrow: "Métricas",
+    title: "Acesse dados para avaliar fit de campanha.",
+    body:
+      "Informe seus dados profissionais para liberar o painel de métricas e receber uma experiência preparada para marcas e agências.",
+    buttonLabel: "Liberar métricas",
+  },
+  contact: {
+    phoneLabel: "11 95358-3354",
+    email: "thaismonteiro2806@outlook.com",
+    instagram: "https://www.instagram.com/thais.msilva",
+  },
+  creatorCredit: "Site criado por Handone Digital",
+} as const;

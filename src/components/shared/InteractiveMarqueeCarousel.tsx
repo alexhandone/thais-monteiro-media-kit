@@ -19,6 +19,9 @@ type InteractiveMarqueeCarouselProps = {
   step?: number;
 };
 
+const AUTO_SCROLL_SPEED = 0.075;
+const DRAG_SENSITIVITY = 1.45;
+
 function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
@@ -54,7 +57,7 @@ export function InteractiveMarqueeCarousel({
 
       if (!isPaused && !isDragging) {
         const loopPoint = track.scrollWidth / 2;
-        track.scrollLeft += delta * 0.035;
+        track.scrollLeft += delta * AUTO_SCROLL_SPEED;
 
         if (track.scrollLeft >= loopPoint) {
           track.scrollLeft -= loopPoint;
@@ -117,8 +120,13 @@ export function InteractiveMarqueeCarousel({
       return;
     }
 
-    const deltaX = event.clientX - dragStartXRef.current;
-    dragDistanceRef.current = Math.max(dragDistanceRef.current, Math.abs(deltaX));
+    event.preventDefault();
+
+    const deltaX = (event.clientX - dragStartXRef.current) * DRAG_SENSITIVITY;
+    dragDistanceRef.current = Math.max(
+      dragDistanceRef.current,
+      Math.abs(deltaX),
+    );
     track.scrollLeft = dragStartScrollRef.current - deltaX;
   }
 
@@ -176,7 +184,7 @@ export function InteractiveMarqueeCarousel({
       <div
         ref={trackRef}
         className={cn(
-          "scrollbar-minimal flex gap-4 overflow-x-auto scroll-smooth py-4 pr-4",
+          "scrollbar-minimal flex touch-pan-y gap-4 overflow-x-auto py-4 pr-4 [scroll-behavior:auto]",
           isDragging ? "cursor-grabbing" : "cursor-grab",
           contentClassName,
         )}

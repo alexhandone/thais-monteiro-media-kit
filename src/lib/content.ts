@@ -48,7 +48,7 @@ export const siteContent = {
   ],
   metricsCta: {
     eyebrow: "Métricas",
-    title: "Acesse dados para avaliar fit de campanha.",
+    title: "Acesse os dados para avaliar um fit de campanha.",
     body:
       "Informe seus dados profissionais para liberar o painel de métricas e receber uma experiência preparada para marcas e agências.",
     buttonLabel: "Liberar métricas",

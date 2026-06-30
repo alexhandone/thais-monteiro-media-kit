@@ -2,6 +2,7 @@ import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 
 import { siteContent } from "@/lib/content";
+import { InteractiveMarqueeCarousel } from "@/components/shared/InteractiveMarqueeCarousel";
 import { MotionReveal } from "@/components/shared/MotionReveal";
 
 import { SectionIntro } from "./SectionIntro";
@@ -54,19 +55,8 @@ export function PartnersSection() {
           />
         </MotionReveal>
 
-        <MotionReveal
-          delay={0.12}
-          className="relative mt-14 overflow-hidden py-4"
-        >
-          <div
-            className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-foreground to-transparent"
-            aria-hidden="true"
-          />
-          <div
-            className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-foreground to-transparent"
-            aria-hidden="true"
-          />
-          <div className="animate-marquee-right flex w-max gap-4 pr-4">
+        <MotionReveal delay={0.12} className="mt-14">
+          <InteractiveMarqueeCarousel label="parcerias" tone="dark">
             {cards.map((partner, index) => (
               <a
                 key={`${partner}-${index}`}
@@ -74,6 +64,7 @@ export function PartnersSection() {
                 target="_blank"
                 rel="noreferrer"
                 aria-label={`Abrir Instagram ${partner}`}
+                draggable={false}
                 className="group relative h-72 w-[17rem] shrink-0 overflow-hidden rounded-xl border border-paper/14 bg-white/7 shadow-[0_18px_50px_rgba(0,0,0,0.14)] backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-accent/70 sm:w-[19rem]"
               >
                 {partnerImages[partner] ? (
@@ -81,6 +72,7 @@ export function PartnersSection() {
                     src={partnerImages[partner]}
                     alt={partner}
                     fill
+                    priority={index < 5}
                     sizes="(min-width: 640px) 19rem, 17rem"
                     className="object-cover transition duration-500 group-hover:scale-105"
                   />
@@ -102,7 +94,7 @@ export function PartnersSection() {
                 </h3>
               </a>
             ))}
-          </div>
+          </InteractiveMarqueeCarousel>
         </MotionReveal>
       </div>
     </section>

@@ -26,6 +26,27 @@ const breakdownItemSchema = z.object({
   value: numberFromJsonSchema,
 });
 
+const optionalBreakdownSchema = z.array(breakdownItemSchema).optional().default([]);
+
+const storyMetricItemSchema = z.object({
+  story_id: z.string().min(1),
+  collected_on: isoDaySchema,
+  collected_at: dateTimeSchema,
+  story_timestamp: dateTimeSchema.nullable(),
+  media_type: nullableStringSchema,
+  media_url: nullableStringSchema,
+  permalink: nullableStringSchema,
+  metrics: z.object({
+    views: numberFromJsonSchema,
+    reach: numberFromJsonSchema,
+    replies: numberFromJsonSchema,
+    shares: numberFromJsonSchema,
+    total_interactions: numberFromJsonSchema,
+    navigation: numberFromJsonSchema,
+    link_clicks: numberFromJsonSchema,
+  }),
+});
+
 const metricsSnapshotSchema = z.object({
   period_start: isoDaySchema,
   period_end: isoDaySchema,
@@ -47,6 +68,9 @@ const metricsSnapshotSchema = z.object({
     accounts_engaged: numberFromJsonSchema,
     total_interactions: numberFromJsonSchema,
     follows_and_unfollows: numberFromJsonSchema,
+    follows_and_unfollows_by_type: optionalBreakdownSchema,
+    views_by_follower_type: optionalBreakdownSchema,
+    views_by_media_product_type: optionalBreakdownSchema,
   }),
   demographics: z.object({
     gender: z.array(breakdownItemSchema),
@@ -73,6 +97,7 @@ const metricsSnapshotSchema = z.object({
       total_interactions: numberFromJsonSchema,
     }),
   ),
+  stories: z.array(storyMetricItemSchema).optional().default([]),
   raw_api_payload: z.unknown(),
 }) satisfies z.ZodType<MetricsSnapshotRow>;
 
@@ -109,6 +134,10 @@ function formatPeriod(start: string, end: string): string {
   return `${ptLongDateFormatter.format(dateFromIsoDay(start))} a ${ptLongDateFormatter.format(dateFromIsoDay(end))}`;
 }
 
+function formatIsoDayLabel(value: string): string {
+  return ptShortDateFormatter.format(dateFromIsoDay(value));
+}
+
 function formatPublishedAt(value: string | null): string {
   if (!value) {
     return "Sem data";
@@ -142,7 +171,9 @@ function toNumber(value: unknown): number {
 function metricValues(rawPayload: unknown, metric: "reach" | "views") {
   const raw = readRecord(rawPayload);
   const overview = readRecord(raw?.overview);
-  const metricPayload = readRecord(overview?.[metric]);
+  const metricPayload = readRecord(
+    metric === "views" ? overview?.views_daily ?? overview?.views : overview?.[metric],
+  );
   const response = readRecord(metricPayload?.data) ?? metricPayload;
   const data = Array.isArray(response?.data) ? response.data : [];
   const values: { dateKey: string; label: string; value: number }[] = [];
@@ -200,6 +231,29 @@ function buildPerformanceSeries(rawPayload: unknown) {
     .map(([, value]) => value);
 }
 
+function repairMojibake(value: string) {
+  return value
+    .replaceAll("ÃƒÂ¡", "á")
+    .replaceAll("Ãƒ ", "à")
+    .replaceAll("ÃƒÂ¢", "â")
+    .replaceAll("ÃƒÂ£", "ã")
+    .replaceAll("ÃƒÂ©", "é")
+    .replaceAll("ÃƒÂª", "ê")
+    .replaceAll("ÃƒÂ­", "í")
+    .replaceAll("ÃƒÂ³", "ó")
+    .replaceAll("ÃƒÂ´", "ô")
+    .replaceAll("ÃƒÂµ", "õ")
+    .replaceAll("ÃƒÂº", "ú")
+    .replaceAll("ÃƒÂ§", "ç")
+    .replaceAll("ÃƒÂ", "Á")
+    .replaceAll("Ãƒâ€°", "É")
+    .replaceAll("ÃƒÅ ", "Ê")
+    .replaceAll("Ãƒâ€¡", "Ç")
+    .replaceAll("Ãƒ", "")
+    .replaceAll("Ã‚", "")
+    .replaceAll("\uFFFD", "");
+}
+
 function makeShortCaption(caption: string) {
   const normalized = repairMojibake(caption).replace(/\s+/g, " ").trim();
 
@@ -210,29 +264,6 @@ function makeShortCaption(caption: string) {
   return normalized.length > 110
     ? `${normalized.slice(0, 107).trimEnd()}...`
     : normalized;
-}
-
-function repairMojibake(value: string) {
-  return value
-    .replaceAll("Ã¡", "á")
-    .replaceAll("Ã ", "à")
-    .replaceAll("Ã¢", "â")
-    .replaceAll("Ã£", "ã")
-    .replaceAll("Ã©", "é")
-    .replaceAll("Ãª", "ê")
-    .replaceAll("Ã­", "í")
-    .replaceAll("Ã³", "ó")
-    .replaceAll("Ã´", "ô")
-    .replaceAll("Ãµ", "õ")
-    .replaceAll("Ãº", "ú")
-    .replaceAll("Ã§", "ç")
-    .replaceAll("Ã", "Á")
-    .replaceAll("Ã‰", "É")
-    .replaceAll("ÃŠ", "Ê")
-    .replaceAll("Ã‡", "Ç")
-    .replaceAll("Ã", "")
-    .replaceAll("Â", "")
-    .replaceAll("\uFFFD", "");
 }
 
 function toPercentageBreakdown(
@@ -264,7 +295,53 @@ function makeGenderLabel(label: string) {
     return "Não informado";
   }
 
-  return label;
+  return repairMojibake(label);
+}
+
+function makeFollowerTypeLabel(label: string) {
+  const normalized = label.trim().toUpperCase();
+
+  if (normalized.includes("NON") || normalized.includes("NAO")) {
+    return "Não seguidores";
+  }
+
+  if (normalized.includes("FOLLOWER") || normalized.includes("SEGUIDOR")) {
+    return "Seguidores";
+  }
+
+  return repairMojibake(label);
+}
+
+function makeMediaProductTypeLabel(label: string) {
+  const normalized = label.trim().toUpperCase();
+
+  if (normalized.includes("REELS")) {
+    return "Reels";
+  }
+
+  if (normalized.includes("STORY")) {
+    return "Stories";
+  }
+
+  if (normalized.includes("FEED") || normalized.includes("POST")) {
+    return "Posts";
+  }
+
+  if (normalized.includes("CAROUSEL")) {
+    return "Carrossel";
+  }
+
+  return repairMojibake(label);
+}
+
+function mapBreakdownLabels(
+  items: InstagramBreakdownItem[],
+  formatter: (label: string) => string,
+): InstagramBreakdownItem[] {
+  return items.map((item) => ({
+    ...item,
+    label: formatter(item.label),
+  }));
 }
 
 function buildDemographics(
@@ -280,6 +357,50 @@ function buildDemographics(
     age: toPercentageBreakdown(snapshot.demographics.age, followersCount),
     city: toPercentageBreakdown(snapshot.demographics.city, followersCount),
     country: toPercentageBreakdown(snapshot.demographics.country, followersCount),
+  };
+}
+
+function buildStoriesSummary(
+  stories: MetricsSnapshotRow["stories"],
+): MetricsViewModel["stories"] {
+  const daily = new Map<
+    string,
+    { label: string; views: number; reach: number; linkClicks: number; stories: number }
+  >();
+
+  for (const story of stories ?? []) {
+    const current = daily.get(story.collected_on) ?? {
+      label: formatIsoDayLabel(story.collected_on),
+      views: 0,
+      reach: 0,
+      linkClicks: 0,
+      stories: 0,
+    };
+
+    current.views += story.metrics.views;
+    current.reach += story.metrics.reach;
+    current.linkClicks += story.metrics.link_clicks;
+    current.stories += 1;
+    daily.set(story.collected_on, current);
+  }
+
+  const totalStories = stories?.length ?? 0;
+  const totalViews = stories?.reduce((sum, story) => sum + story.metrics.views, 0) ?? 0;
+  const totalLinkClicks =
+    stories?.reduce((sum, story) => sum + story.metrics.link_clicks, 0) ?? 0;
+
+  return {
+    totalStories,
+    totalViews,
+    averageViewsPerStory: totalStories ? Math.round(totalViews / totalStories) : 0,
+    totalLinkClicks,
+    averageLinkClicksPerStory: totalStories
+      ? Math.round(totalLinkClicks / totalStories)
+      : 0,
+    daily: [...daily.entries()]
+      .sort(([first], [second]) => first.localeCompare(second))
+      .map(([, value]) => value),
+    items: stories ?? [],
   };
 }
 
@@ -300,18 +421,24 @@ export function buildMetricsViewModel(
       { label: "Alcance", value: formatNumber(overview.reach) },
       { label: "Visualizações", value: formatNumber(overview.views) },
       { label: "Visitas ao perfil", value: formatNumber(overview.profile_views) },
-      {
-        label: "Cliques no link",
-        value: formatNumber(overview.profile_links_taps),
-      },
+      { label: "Cliques no link", value: formatNumber(overview.profile_links_taps) },
       { label: "Contas engajadas", value: formatNumber(overview.accounts_engaged) },
       { label: "Interações", value: formatNumber(overview.total_interactions) },
-      ...(followsAndUnfollows
-        ? [{ label: "Seguidores líquidos", value: formatNumber(followsAndUnfollows) }]
-        : []),
+      { label: "Seguidores líquidos", value: formatNumber(followsAndUnfollows) },
     ],
     performanceSeries: buildPerformanceSeries(snapshot.raw_api_payload),
+    viewBreakdowns: {
+      followerType: mapBreakdownLabels(
+        overview.views_by_follower_type ?? [],
+        makeFollowerTypeLabel,
+      ),
+      mediaProductType: mapBreakdownLabels(
+        overview.views_by_media_product_type ?? [],
+        makeMediaProductTypeLabel,
+      ),
+    },
     demographics: buildDemographics(snapshot),
+    stories: buildStoriesSummary(snapshot.stories ?? []),
     topContent: snapshot.top_content.slice(0, 10).map((item, index) => ({
       ...item,
       rank: index + 1,

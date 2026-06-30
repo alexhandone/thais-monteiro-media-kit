@@ -88,8 +88,20 @@ function compactLabel(label: string) {
   return label;
 }
 
+function normalizeMetricLabel(label: string) {
+  return label
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replaceAll("Ã§", "c")
+    .replaceAll("Ãµ", "o")
+    .replaceAll("Ã­", "i")
+    .toLowerCase();
+}
+
 function findCard(cards: OverviewCard[], label: string) {
-  return cards.find((card) => card.label === label);
+  const normalizedLabel = normalizeMetricLabel(label);
+
+  return cards.find((card) => normalizeMetricLabel(card.label) === normalizedLabel);
 }
 
 function MetricCallout({

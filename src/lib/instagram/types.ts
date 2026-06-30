@@ -3,6 +3,25 @@ export type InstagramBreakdownItem = {
   value: number;
 };
 
+export type InstagramStoryMetricItem = {
+  story_id: string;
+  collected_on: string;
+  collected_at: string;
+  story_timestamp: string | null;
+  media_type: string | null;
+  media_url: string | null;
+  permalink: string | null;
+  metrics: {
+    views: number;
+    reach: number;
+    replies: number;
+    shares: number;
+    total_interactions: number;
+    navigation: number;
+    link_clicks: number;
+  };
+};
+
 export type InstagramProfile = {
   id: string;
   username: string;
@@ -21,6 +40,9 @@ export type InstagramOverviewMetrics = {
   accounts_engaged: number;
   total_interactions: number;
   follows_and_unfollows: number;
+  follows_and_unfollows_by_type?: InstagramBreakdownItem[];
+  views_by_follower_type?: InstagramBreakdownItem[];
+  views_by_media_product_type?: InstagramBreakdownItem[];
 };
 
 export type InstagramDemographics = {
@@ -56,6 +78,6 @@ export type InstagramSnapshot = {
   overview_metrics: InstagramOverviewMetrics;
   demographics: InstagramDemographics;
   top_content: InstagramTopContentItem[];
+  stories?: InstagramStoryMetricItem[];
   raw_api_payload: unknown;
 };
-

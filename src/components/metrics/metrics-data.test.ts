@@ -26,6 +26,15 @@ describe("buildMetricsViewModel", () => {
         accounts_engaged: 80,
         total_interactions: 95,
         follows_and_unfollows: 12,
+        views_by_follower_type: [
+          { label: "FOLLOWER", value: 930 },
+          { label: "NON_FOLLOWER", value: 1570 },
+        ],
+        views_by_media_product_type: [
+          { label: "REELS", value: 1800 },
+          { label: "STORY", value: 500 },
+          { label: "FEED", value: 200 },
+        ],
       },
       demographics: {
         gender: [
@@ -53,6 +62,26 @@ describe("buildMetricsViewModel", () => {
         saved: 4,
         total_interactions: 19,
       })),
+      stories: [
+        {
+          story_id: "story-1",
+          collected_on: "2026-06-25",
+          collected_at: "2026-06-25T23:00:00.000Z",
+          story_timestamp: "2026-06-25T18:00:00.000Z",
+          media_type: "IMAGE",
+          media_url: null,
+          permalink: null,
+          metrics: {
+            views: 400,
+            reach: 320,
+            replies: 2,
+            shares: 1,
+            total_interactions: 3,
+            navigation: 120,
+            link_clicks: 8,
+          },
+        },
+      ],
       raw_api_payload: {
         overview: {
           reach: {
@@ -99,6 +128,21 @@ describe("buildMetricsViewModel", () => {
       { label: "24/06", reach: 100, views: 220 },
       { label: "25/06", reach: 140, views: 260 },
     ]);
+    expect(viewModel.viewBreakdowns.followerType).toEqual([
+      { label: "Seguidores", value: 930 },
+      { label: "Não seguidores", value: 1570 },
+    ]);
+    expect(viewModel.viewBreakdowns.mediaProductType).toEqual([
+      { label: "Reels", value: 1800 },
+      { label: "Stories", value: 500 },
+      { label: "Posts", value: 200 },
+    ]);
+    expect(viewModel.stories).toMatchObject({
+      totalStories: 1,
+      totalViews: 400,
+      averageViewsPerStory: 400,
+      totalLinkClicks: 8,
+    });
     expect(viewModel.topContent).toHaveLength(10);
     expect(viewModel.topContent[0]?.rank).toBe(1);
   });

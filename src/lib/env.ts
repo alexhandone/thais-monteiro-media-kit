@@ -10,6 +10,7 @@ const serverEnvSchema = z.object({
   META_PAGE_ID: z.string().min(1),
   META_ACCESS_TOKEN: z.string().min(1),
   METRICS_REFRESH_SECRET: z.string().min(24),
+  CRON_SECRET: z.string().min(24).optional(),
   TOKEN_HASH_SECRET: z.string().min(32),
   NEXT_PUBLIC_WHATSAPP_URL: z.url(),
   NEXT_PUBLIC_INSTAGRAM_URL: z.url(),

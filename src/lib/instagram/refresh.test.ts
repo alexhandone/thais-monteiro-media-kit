@@ -21,6 +21,16 @@ describe("instagram refresh helpers", () => {
         required: true,
       },
       {
+        key: "views_daily",
+        params: {
+          metric: "views",
+          period: "day",
+          since: 100,
+          until: 200,
+        },
+        required: false,
+      },
+      {
         key: "views",
         params: {
           metric: "views",
@@ -81,6 +91,42 @@ describe("instagram refresh helpers", () => {
           metric: "follows_and_unfollows",
           period: "day",
           metric_type: "total_value",
+          since: 100,
+          until: 200,
+        },
+        required: false,
+      },
+      {
+        key: "views_by_follower_type",
+        params: {
+          metric: "views",
+          period: "day",
+          metric_type: "total_value",
+          breakdown: "follow_type",
+          since: 100,
+          until: 200,
+        },
+        required: false,
+      },
+      {
+        key: "views_by_media_product_type",
+        params: {
+          metric: "views",
+          period: "day",
+          metric_type: "total_value",
+          breakdown: "media_product_type",
+          since: 100,
+          until: 200,
+        },
+        required: false,
+      },
+      {
+        key: "follows_and_unfollows_by_type",
+        params: {
+          metric: "follows_and_unfollows",
+          period: "day",
+          metric_type: "total_value",
+          breakdown: "follow_type",
           since: 100,
           until: 200,
         },

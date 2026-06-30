@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, MapPin, TrendingUp, UsersRound } from "lucide-react";
+import { BarChart3, Clapperboard, MapPin, TrendingUp, UsersRound } from "lucide-react";
 import {
   Area,
   AreaChart,
@@ -25,9 +25,11 @@ type MetricsChartsProps = {
   gender: InstagramBreakdownItem[];
   cities: InstagramBreakdownItem[];
   age: InstagramBreakdownItem[];
+  viewFollowerType: InstagramBreakdownItem[];
+  viewMediaProductType: InstagramBreakdownItem[];
 };
 
-const chartColors = ["#ef1f3d", "#3e3c36", "#8b6f47", "#2f7d6f", "#a64f6a"];
+const chartColors = ["#ef1f3d", "#f45b70", "#f08a99", "#7a1f2d", "#3e3c36"];
 const cityBarColor = "#ef1f3d";
 const numberFormatter = new Intl.NumberFormat("pt-BR");
 const genderLabelPositions = [
@@ -57,6 +59,15 @@ function cleanCityLabel(label: string) {
     .replace(/\s+,/g, ",")
     .replace(/,\s*$/g, "")
     .trim();
+}
+
+function withPercent(items: InstagramBreakdownItem[]) {
+  const total = items.reduce((sum, item) => sum + item.value, 0);
+
+  return items.map((item) => ({
+    ...item,
+    percent: total ? (item.value / total) * 100 : 0,
+  }));
 }
 
 function EmptyChart({ label }: { label: string }) {
@@ -93,11 +104,68 @@ function ChartCard({
   );
 }
 
+function HorizontalBreakdownChart({
+  data,
+  emptyLabel,
+}: {
+  data: InstagramBreakdownItem[];
+  emptyLabel: string;
+}) {
+  const chartData = withPercent(data);
+
+  if (!chartData.length) {
+    return <EmptyChart label={emptyLabel} />;
+  }
+
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart
+        data={chartData}
+        layout="vertical"
+        margin={{ left: 4, right: 44, top: 8, bottom: 8 }}
+      >
+        <XAxis type="number" hide domain={[0, 100]} />
+        <YAxis
+          type="category"
+          dataKey="label"
+          width={118}
+          tickLine={false}
+          axisLine={false}
+          fontSize={12}
+        />
+        <Tooltip
+          formatter={(_, __, item) => [
+            `${formatNumber(Number(item.payload.value))} visualizações`,
+            formatPercent(item.payload.percent),
+          ]}
+          contentStyle={{ borderRadius: 8, borderColor: "rgba(62,60,54,0.18)" }}
+        />
+        <Bar dataKey="percent" name="Participação" fill="#ef1f3d" radius={[0, 7, 7, 0]}>
+          <LabelList
+            dataKey="percent"
+            position="right"
+            formatter={(value) => formatPercent(value)}
+            className="fill-foreground text-xs font-semibold"
+          />
+          {chartData.map((entry, index) => (
+            <Cell
+              key={entry.label}
+              fill={chartColors[index % chartColors.length]}
+            />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
 export function MetricsCharts({
   performanceSeries,
   gender,
   cities,
   age,
+  viewFollowerType,
+  viewMediaProductType,
 }: MetricsChartsProps) {
   const hasDailyViews = performanceSeries.some((point) => point.views > 0);
   const cleanCities = cities.map((city) => ({
@@ -149,6 +217,20 @@ export function MetricsCharts({
         ) : (
           <EmptyChart label="Série diária indisponível neste snapshot." />
         )}
+      </ChartCard>
+
+      <ChartCard title="Visualizações por público" icon={UsersRound}>
+        <HorizontalBreakdownChart
+          data={viewFollowerType}
+          emptyLabel="Participação de seguidores e não seguidores indisponível neste snapshot."
+        />
+      </ChartCard>
+
+      <ChartCard title="Visualizações por formato" icon={Clapperboard}>
+        <HorizontalBreakdownChart
+          data={viewMediaProductType}
+          emptyLabel="Visualizações por tipo de conteúdo indisponíveis neste snapshot."
+        />
       </ChartCard>
 
       <ChartCard title="Gênero" icon={UsersRound} contentClassName="h-auto">

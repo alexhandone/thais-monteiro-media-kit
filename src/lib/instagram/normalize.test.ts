@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  normalizeInsightBreakdown,
   normalizeDemographicBreakdowns,
   shortCaption,
   sumInsightValues,
@@ -60,6 +61,37 @@ describe("instagram normalizers", () => {
           Bad: Number.NaN,
         }),
       ).toEqual([{ label: "SaoPaulo", value: 12 }]);
+    });
+  });
+
+  describe("normalizeInsightBreakdown", () => {
+    it("extracts total_value breakdowns from Meta insight responses", () => {
+      expect(
+        normalizeInsightBreakdown(
+          {
+            data: [
+              {
+                name: "views",
+                total_value: {
+                  breakdowns: [
+                    {
+                      dimension_keys: ["follow_type"],
+                      results: [
+                        { dimension_values: ["FOLLOWER"], value: 370 },
+                        { dimension_values: ["NON_FOLLOWER"], value: 630 },
+                      ],
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+          "views",
+        ),
+      ).toEqual([
+        { label: "NON_FOLLOWER", value: 630 },
+        { label: "FOLLOWER", value: 370 },
+      ]);
     });
   });
 

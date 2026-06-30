@@ -5,12 +5,14 @@ import { InterestsEditorial } from "@/components/metrics/InterestsEditorial";
 import { MetricsHeroInfographic } from "@/components/metrics/MetricsHeroInfographic";
 import { MetricsCharts } from "@/components/metrics/MetricsCharts";
 import { MetricsStatus } from "@/components/metrics/MetricsStatus";
+import { StoriesInsights } from "@/components/metrics/StoriesInsights";
 import { buildMetricsViewModelSafe } from "@/components/metrics/metrics-data";
 import { SiteHeader } from "@/components/public/SiteHeader";
 import { Footer } from "@/components/shared/Footer";
 import { WhatsAppFloatingButton } from "@/components/shared/WhatsAppFloatingButton";
 import { hashAccessToken } from "@/lib/access-token";
 import { getServerEnv } from "@/lib/env";
+import { getRecentStorySnapshots } from "@/lib/instagram/stories";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase/server";
 
 type MetricsPageProps = {
@@ -119,7 +121,8 @@ export default async function MetricsPage({ params }: MetricsPageProps) {
     );
   }
 
-  const viewModel = buildMetricsViewModelSafe(snapshot);
+  const stories = await getRecentStorySnapshots(30);
+  const viewModel = buildMetricsViewModelSafe({ ...snapshot, stories });
 
   if (!viewModel) {
     return (
@@ -174,7 +177,11 @@ export default async function MetricsPage({ params }: MetricsPageProps) {
             gender={viewModel.demographics.gender}
             cities={viewModel.demographics.city}
             age={viewModel.demographics.age}
+            viewFollowerType={viewModel.viewBreakdowns.followerType}
+            viewMediaProductType={viewModel.viewBreakdowns.mediaProductType}
           />
+
+          <StoriesInsights stories={viewModel.stories} />
 
           <ContentRanking items={viewModel.topContent} />
           <InterestsEditorial />

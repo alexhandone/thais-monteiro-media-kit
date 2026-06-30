@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { refreshInstagramSnapshot } from "@/lib/instagram/refresh";
+import { refreshInstagramStoriesSnapshot } from "@/lib/instagram/stories";
 import { isAuthorizedMetricsRefresh } from "@/lib/metrics-auth";
 
 export const runtime = "nodejs";
@@ -11,19 +11,14 @@ async function handleRefresh(request: Request) {
   }
 
   try {
-    const snapshot = await refreshInstagramSnapshot();
+    const snapshot = await refreshInstagramStoriesSnapshot();
 
-    return NextResponse.json({
-      periodStart: snapshot.period_start,
-      periodEnd: snapshot.period_end,
-      collectedAt: snapshot.collected_at,
-      topContentCount: snapshot.top_content.length,
-    });
+    return NextResponse.json(snapshot);
   } catch (error) {
-    console.error("Unable to refresh Instagram metrics", error);
+    console.error("Unable to refresh Instagram story metrics", error);
 
     return NextResponse.json(
-      { error: "Unable to refresh Instagram metrics." },
+      { error: "Unable to refresh Instagram story metrics." },
       { status: 500 },
     );
   }

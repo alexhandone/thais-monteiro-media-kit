@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/metrics/stories/refresh",
+      "schedule": "30 2 * * *"
+    },
+    {
+      "path": "/api/metrics/refresh",
+      "schedule": "0 3 * * 1"
+    }
+  ]
+}

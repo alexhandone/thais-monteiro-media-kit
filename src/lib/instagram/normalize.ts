@@ -69,6 +69,58 @@ export function toTopFiveBreakdown(input: unknown): InstagramBreakdownItem[] {
     .slice(0, 5);
 }
 
+export function normalizeInsightBreakdown(
+  response: unknown,
+  metricName: string,
+  maxItems = 8,
+): InstagramBreakdownItem[] {
+  const collected: Record<string, number> = {};
+  const payload = readRecord(response);
+  const data = Array.isArray(payload?.data) ? payload.data : [];
+
+  for (const item of data) {
+    const insight = readRecord(item);
+    if (!insight || insight.name !== metricName) {
+      continue;
+    }
+
+    const totalValue = readRecord(insight.total_value);
+    const breakdowns = Array.isArray(totalValue?.breakdowns)
+      ? totalValue.breakdowns
+      : [];
+
+    for (const breakdownItem of breakdowns) {
+      const breakdown = readRecord(breakdownItem);
+      const dimensionKeys = Array.isArray(breakdown?.dimension_keys)
+        ? breakdown.dimension_keys
+        : [];
+      const results = Array.isArray(breakdown?.results) ? breakdown.results : [];
+
+      for (const resultItem of results) {
+        const result = readRecord(resultItem);
+        const dimensionValues = Array.isArray(result?.dimension_values)
+          ? result.dimension_values
+          : [];
+        const label = dimensionValues
+          .slice(0, Math.max(1, dimensionKeys.length))
+          .map((value) => String(value ?? "").trim())
+          .filter(Boolean)
+          .join(" / ");
+        const numericValue = toNumber(result?.value);
+
+        if (label && numericValue > 0) {
+          collected[label] = (collected[label] ?? 0) + numericValue;
+        }
+      }
+    }
+  }
+
+  return Object.entries(collected)
+    .map(([label, value]) => ({ label, value }))
+    .sort((first, second) => second.value - first.value)
+    .slice(0, maxItems);
+}
+
 export function shortCaption(caption: unknown, maxLength = 140): string {
   const normalized =
     typeof caption === "string" ? caption.replace(/\s+/g, " ").trim() : "";
@@ -188,6 +240,18 @@ export function normalizeOverviewMetrics(
     follows_and_unfollows: sumInsightValues(
       responsesByMetric.follows_and_unfollows,
       "follows_and_unfollows",
+    ),
+    follows_and_unfollows_by_type: normalizeInsightBreakdown(
+      responsesByMetric.follows_and_unfollows_by_type,
+      "follows_and_unfollows",
+    ),
+    views_by_follower_type: normalizeInsightBreakdown(
+      responsesByMetric.views_by_follower_type,
+      "views",
+    ),
+    views_by_media_product_type: normalizeInsightBreakdown(
+      responsesByMetric.views_by_media_product_type,
+      "views",
     ),
   };
 }

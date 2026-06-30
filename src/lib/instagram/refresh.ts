@@ -52,7 +52,7 @@ const mediaInsightMetrics = [
 type GraphParams = Record<string, string | number | boolean | undefined | null>;
 
 type OverviewInsightRequest = {
-  key: keyof InstagramOverviewMetrics;
+  key: keyof InstagramOverviewMetrics | "views_daily";
   params: GraphParams;
   required: boolean;
 };
@@ -89,6 +89,16 @@ export function buildOverviewInsightRequests(
       },
       required: true,
     },
+    {
+      key: "views_daily",
+      params: {
+        metric: "views",
+        period: "day",
+        since,
+        until,
+      },
+      required: false,
+    },
     ...totalValueMetrics.map((metric) => ({
       key: metric,
       // Keep these as one-metric calls. Meta's total_value compatibility varies
@@ -103,6 +113,42 @@ export function buildOverviewInsightRequests(
       },
       required: metric === "views",
     })),
+    {
+      key: "views_by_follower_type",
+      params: {
+        metric: "views",
+        period: "day",
+        metric_type: "total_value",
+        breakdown: "follow_type",
+        since,
+        until,
+      },
+      required: false,
+    },
+    {
+      key: "views_by_media_product_type",
+      params: {
+        metric: "views",
+        period: "day",
+        metric_type: "total_value",
+        breakdown: "media_product_type",
+        since,
+        until,
+      },
+      required: false,
+    },
+    {
+      key: "follows_and_unfollows_by_type",
+      params: {
+        metric: "follows_and_unfollows",
+        period: "day",
+        metric_type: "total_value",
+        breakdown: "follow_type",
+        since,
+        until,
+      },
+      required: false,
+    },
   ];
 }
 
@@ -179,7 +225,9 @@ async function getOptionalAccountInsights(
       );
 
       raw[request.key] = { data: response, error: null };
-      responses[request.key] = response;
+      if (request.key !== "views_daily") {
+        responses[request.key] = response;
+      }
       continue;
     }
 
@@ -189,7 +237,9 @@ async function getOptionalAccountInsights(
     );
 
     raw[request.key] = result;
-    responses[request.key] = result.data;
+    if (request.key !== "views_daily") {
+      responses[request.key] = result.data;
+    }
     collectOptionalGraphError(errors, `overview.${request.key}`, result);
   }
 

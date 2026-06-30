@@ -1,4 +1,5 @@
 import { getServerEnv } from "../env";
+import { getActiveMetaAccessToken } from "../meta-token";
 
 type GraphParams = Record<string, string | number | boolean | undefined | null>;
 
@@ -14,8 +15,10 @@ type GraphErrorPayload = {
 export async function graphGet<T>(
   path: string,
   params: GraphParams = {},
+  options: { accessToken?: string } = {},
 ): Promise<T> {
   const env = getServerEnv();
+  const accessToken = options.accessToken ?? (await getActiveMetaAccessToken());
   const normalizedPath = path.replace(/^\/+/, "");
   const searchParams = new URLSearchParams();
 
@@ -25,7 +28,7 @@ export async function graphGet<T>(
     }
   }
 
-  searchParams.set("access_token", env.META_ACCESS_TOKEN);
+  searchParams.set("access_token", accessToken);
 
   const response = await fetch(
     `https://graph.facebook.com/${env.META_GRAPH_API_VERSION}/${normalizedPath}?${searchParams.toString()}`,

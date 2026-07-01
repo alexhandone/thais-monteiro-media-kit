@@ -229,6 +229,10 @@ export function normalizeOverviewMetrics(
       responsesByMetric.profile_links_taps,
       "profile_links_taps",
     ),
+    website_clicks: sumInsightValues(
+      responsesByMetric.website_clicks,
+      "website_clicks",
+    ),
     accounts_engaged: sumInsightValues(
       responsesByMetric.accounts_engaged,
       "accounts_engaged",

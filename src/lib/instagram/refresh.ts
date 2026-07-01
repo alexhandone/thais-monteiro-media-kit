@@ -73,6 +73,7 @@ export function buildOverviewInsightRequests(
     "views",
     "profile_views",
     "profile_links_taps",
+    "website_clicks",
     "accounts_engaged",
     "total_interactions",
     "follows_and_unfollows",

@@ -65,6 +65,7 @@ const metricsSnapshotSchema = z.object({
     views: numberFromJsonSchema,
     profile_views: numberFromJsonSchema,
     profile_links_taps: numberFromJsonSchema,
+    website_clicks: numberFromJsonSchema.optional().default(0),
     accounts_engaged: numberFromJsonSchema,
     total_interactions: numberFromJsonSchema,
     follows_and_unfollows: numberFromJsonSchema,
@@ -394,6 +395,32 @@ function sumBreakdownByLabels(
   }, 0);
 }
 
+function calculateNetFollowers(
+  overview: MetricsSnapshotRow["overview_metrics"],
+) {
+  const total = Number(overview.follows_and_unfollows ?? 0);
+
+  if (total !== 0) {
+    return total;
+  }
+
+  const breakdown = overview.follows_and_unfollows_by_type ?? [];
+  const follows = breakdown.reduce((sum, item) => {
+    const label = item.label.trim().toUpperCase();
+    return label === "FOLLOWER" || label === "FOLLOWERS"
+      ? sum + Number(item.value ?? 0)
+      : sum;
+  }, 0);
+  const unfollows = breakdown.reduce((sum, item) => {
+    const label = item.label.trim().toUpperCase();
+    return label === "NON_FOLLOWER" || label === "NON_FOLLOWERS"
+      ? sum + Number(item.value ?? 0)
+      : sum;
+  }, 0);
+
+  return follows || unfollows ? follows - unfollows : 0;
+}
+
 function percentageChange(current: number, previous: number) {
   if (!Number.isFinite(current) || !Number.isFinite(previous) || previous <= 0) {
     return null;
@@ -543,7 +570,10 @@ export function buildMetricsViewModel(
   previousSnapshot?: MetricsSnapshotRow | null,
 ): MetricsViewModel {
   const { profile, overview_metrics: overview } = snapshot;
-  const followsAndUnfollows = Number(overview.follows_and_unfollows ?? 0);
+  const followsAndUnfollows = calculateNetFollowers(overview);
+  const externalLinkTaps = Number(
+    overview.website_clicks ?? overview.profile_links_taps ?? 0,
+  );
 
   return {
     periodLabel: formatPeriod(snapshot.period_start, snapshot.period_end),
@@ -556,7 +586,7 @@ export function buildMetricsViewModel(
       { label: "Alcance", value: formatNumber(overview.reach) },
       { label: "Visualizações", value: formatNumber(overview.views) },
       { label: "Visitas ao perfil", value: formatNumber(overview.profile_views) },
-      { label: "Cliques no link", value: formatNumber(overview.profile_links_taps) },
+      { label: "Toques em links externos", value: formatNumber(externalLinkTaps) },
       { label: "Contas engajadas", value: formatNumber(overview.accounts_engaged) },
       { label: "Interações", value: formatNumber(overview.total_interactions) },
       { label: "Seguidores líquidos", value: formatNumber(followsAndUnfollows) },

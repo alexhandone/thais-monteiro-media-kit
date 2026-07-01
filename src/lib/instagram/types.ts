@@ -37,6 +37,7 @@ export type InstagramOverviewMetrics = {
   views: number;
   profile_views: number;
   profile_links_taps: number;
+  website_clicks?: number;
   accounts_engaged: number;
   total_interactions: number;
   follows_and_unfollows: number;

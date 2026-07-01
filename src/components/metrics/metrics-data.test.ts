@@ -23,6 +23,7 @@ describe("buildMetricsViewModel", () => {
         views: 2500,
         profile_views: 120,
         profile_links_taps: 30,
+        website_clicks: 48,
         accounts_engaged: 80,
         total_interactions: 95,
         follows_and_unfollows: 12,
@@ -123,6 +124,22 @@ describe("buildMetricsViewModel", () => {
     expect(viewModel.overviewCards).toContainEqual({
       label: "Seguidores líquidos",
       value: "12",
+    });
+    expect(viewModel.overviewCards).toContainEqual({
+      label: "Toques em links externos",
+      value: "48",
+    });
+
+    const snapshotWithNetFollowers = structuredClone(snapshot);
+    snapshotWithNetFollowers.overview_metrics.follows_and_unfollows = 0;
+    snapshotWithNetFollowers.overview_metrics.follows_and_unfollows_by_type = [
+      { label: "FOLLOWER", value: 1282 },
+      { label: "NON_FOLLOWER", value: 160 },
+    ];
+
+    expect(buildMetricsViewModel(snapshotWithNetFollowers).overviewCards).toContainEqual({
+      label: "Seguidores líquidos",
+      value: "1.122",
     });
     expect(viewModel.performanceSeries).toEqual([
       { label: "24/06", reach: 100, views: 220 },

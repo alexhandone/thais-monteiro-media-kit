@@ -30,7 +30,7 @@ const primaryMetricLabels = [
 const secondaryMetricLabels = [
   "Publicações",
   "Seguindo",
-  "Cliques no link",
+  "Toques em links externos",
   "Seguidores líquidos",
   "Visualizações de reels e posts",
   "Visualizações de não seguidores",

@@ -64,6 +64,17 @@ describe("instagram refresh helpers", () => {
         required: false,
       },
       {
+        key: "website_clicks",
+        params: {
+          metric: "website_clicks",
+          period: "day",
+          metric_type: "total_value",
+          since: 100,
+          until: 200,
+        },
+        required: false,
+      },
+      {
         key: "accounts_engaged",
         params: {
           metric: "accounts_engaged",

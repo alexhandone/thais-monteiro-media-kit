@@ -264,13 +264,13 @@ function FormatBreakdownChart({
 
   return (
     <div className="grid h-full gap-3">
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5">
         {metricModes.map((item) => (
           <button
             key={item.key}
             type="button"
             onClick={() => setMetricMode(item.key)}
-            className={`rounded-full border px-2 py-1 text-[0.56rem] font-semibold uppercase tracking-[0.06em] transition sm:px-3 sm:py-1.5 sm:text-xs sm:tracking-[0.16em] ${
+            className={`rounded-full border px-2 py-0.5 text-[0.52rem] font-semibold uppercase tracking-[0.04em] transition sm:px-2.5 sm:py-1 sm:text-[0.62rem] sm:tracking-[0.1em] ${
               metricMode === item.key
                 ? "border-accent bg-accent text-white"
                 : "border-border-soft bg-background/50 text-muted hover:border-accent/45 hover:text-foreground"
@@ -280,7 +280,7 @@ function FormatBreakdownChart({
           </button>
         ))}
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5 border-t border-border-soft/80 pt-2">
         {audienceModes.map((item) => {
           const disabled = isInteractionMode && item.key !== "all";
 
@@ -294,7 +294,7 @@ function FormatBreakdownChart({
                   setAudienceMode(item.key);
                 }
               }}
-              className={`rounded-full border px-2 py-1 text-[0.54rem] font-semibold uppercase tracking-[0.05em] transition sm:px-2.5 sm:text-[0.68rem] ${
+              className={`rounded-full border px-2 py-0.5 text-[0.5rem] font-semibold uppercase tracking-[0.04em] transition sm:px-2.5 sm:py-1 sm:text-[0.58rem] sm:tracking-[0.08em] ${
                 audienceMode === item.key && !disabled
                   ? "border-foreground/30 bg-foreground text-paper"
                   : "border-border-soft bg-background/50 text-muted hover:border-accent/45 hover:text-foreground"
@@ -305,7 +305,7 @@ function FormatBreakdownChart({
           );
         })}
       </div>
-      <div className="min-h-48 flex-1">
+      <div className="min-h-56 flex-1 overflow-hidden sm:min-h-52">
         <HorizontalBreakdownChart
           data={data}
           emptyLabel={
@@ -342,13 +342,13 @@ function LocationBreakdownChart({
 
   return (
     <div className="grid h-full gap-3">
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5">
         {modes.map((item) => (
           <button
             key={item.key}
             type="button"
             onClick={() => setMode(item.key)}
-            className={`rounded-full border px-2.5 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.08em] transition sm:px-3 sm:py-1.5 sm:text-xs sm:tracking-[0.16em] ${
+            className={`rounded-full border px-2 py-0.5 text-[0.52rem] font-semibold uppercase tracking-[0.04em] transition sm:px-2.5 sm:py-1 sm:text-[0.62rem] sm:tracking-[0.1em] ${
               mode === item.key
                 ? "border-accent bg-accent text-white"
                 : "border-border-soft bg-background/50 text-muted hover:border-accent/45 hover:text-foreground"

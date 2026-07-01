@@ -25,12 +25,16 @@ type MetricsChartsProps = {
   performanceSeries: PerformancePoint[];
   gender: InstagramBreakdownItem[];
   cities: InstagramBreakdownItem[];
+  countries: InstagramBreakdownItem[];
   age: InstagramBreakdownItem[];
   viewFollowerType: InstagramBreakdownItem[];
   viewMediaProductType: InstagramBreakdownItem[];
+  interactionMediaProductType: InstagramBreakdownItem[];
 };
 
-type DailyMode = "both" | "reach" | "views";
+type FormatMetricMode = "views" | "interactions";
+type FormatAudienceMode = "all" | "followers" | "nonFollowers";
+type LocationMode = "cities" | "countries";
 
 const chartColors = ["#ef1f3d", "#f45b70", "#f08a99", "#7a1f2d", "#3e3c36"];
 const cityBarColor = "#ef1f3d";
@@ -62,6 +66,17 @@ function cleanCityLabel(label: string) {
     .replace(/\s+,/g, ",")
     .replace(/,\s*$/g, "")
     .trim();
+}
+
+function cleanCountryLabel(label: string) {
+  const countries = new Intl.DisplayNames(["pt-BR"], { type: "region" });
+  const normalized = label.trim().toUpperCase();
+
+  if (/^[A-Z]{2}$/.test(normalized)) {
+    return countries.of(normalized) ?? label;
+  }
+
+  return label.trim();
 }
 
 function withPercent(items: InstagramBreakdownItem[]) {
@@ -139,90 +154,35 @@ function ExternalTooltip({
 }
 
 function DailyPerformanceChart({ data }: { data: PerformancePoint[] }) {
-  const [mode, setMode] = useState<DailyMode>("both");
-  const hasDailyViews = data.some((point) => point.views > 0);
-
   if (!data.length) {
     return <EmptyChart label="Série diária indisponível neste snapshot." />;
   }
 
-  const modes: Array<{ key: DailyMode; label: string }> = [
-    { key: "both", label: "Ambos" },
-    { key: "reach", label: "Alcance" },
-    { key: "views", label: "Visualizações" },
-  ];
-  const effectiveMode = hasDailyViews ? mode : "reach";
-
   return (
-    <div className="grid gap-4">
-      <div className="flex flex-wrap gap-2">
-        {modes.map((item) => {
-          const disabled = item.key === "views" && !hasDailyViews;
-
-          return (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => {
-                if (!disabled) {
-                  setMode(item.key);
-                }
-              }}
-              disabled={disabled}
-              className={`rounded-full border px-2 py-1 text-[0.56rem] font-semibold uppercase tracking-[0.06em] transition sm:px-3 sm:py-1.5 sm:text-xs sm:tracking-[0.16em] ${
-                effectiveMode === item.key
-                  ? "border-accent bg-accent text-white"
-                  : "border-border-soft bg-background/50 text-muted hover:border-accent/45 hover:text-foreground"
-              } ${disabled ? "cursor-not-allowed opacity-45 hover:border-border-soft hover:text-muted" : ""}`}
-            >
-              {item.label}
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="h-64 min-w-0 overflow-hidden">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ left: 0, right: 8 }}>
-            <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={12} />
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              fontSize={12}
-              width={54}
-              tickFormatter={(value) => formatNumber(Number(value))}
-            />
-            <Tooltip
-              formatter={(value, name) => [
-                formatNumber(Number(value)),
-                name === "views" ? "Visualizações" : "Alcance",
-              ]}
-              contentStyle={{ borderRadius: 8, borderColor: "rgba(62,60,54,0.18)" }}
-            />
-            {effectiveMode === "both" || effectiveMode === "reach" ? (
-              <Area
-                type="monotone"
-                dataKey="reach"
-                name="reach"
-                stroke="#ef1f3d"
-                fill="#ef1f3d"
-                fillOpacity={effectiveMode === "both" ? 0.1 : 0.16}
-              />
-            ) : null}
-            {effectiveMode === "both" || effectiveMode === "views" ? (
-              <Area
-                type="monotone"
-                dataKey="views"
-                name="views"
-                stroke="#3e3c36"
-                fill="#3e3c36"
-                fillOpacity={effectiveMode === "both" ? 0.08 : 0.14}
-              />
-            ) : null}
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
+    <ResponsiveContainer width="100%" height="100%">
+      <AreaChart data={data} margin={{ left: 0, right: 8 }}>
+        <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={12} />
+        <YAxis
+          tickLine={false}
+          axisLine={false}
+          fontSize={12}
+          width={54}
+          tickFormatter={(value) => formatNumber(Number(value))}
+        />
+        <Tooltip
+          formatter={(value) => [formatNumber(Number(value)), "Alcance"]}
+          contentStyle={{ borderRadius: 8, borderColor: "rgba(62,60,54,0.18)" }}
+        />
+        <Area
+          type="monotone"
+          dataKey="reach"
+          name="Alcance"
+          stroke="#ef1f3d"
+          fill="#ef1f3d"
+          fillOpacity={0.16}
+        />
+      </AreaChart>
+    </ResponsiveContainer>
   );
 }
 
@@ -278,6 +238,168 @@ function HorizontalBreakdownChart({
         </Bar>
       </BarChart>
     </ResponsiveContainer>
+  );
+}
+
+function FormatBreakdownChart({
+  views,
+  interactions,
+}: {
+  views: InstagramBreakdownItem[];
+  interactions: InstagramBreakdownItem[];
+}) {
+  const [metricMode, setMetricMode] = useState<FormatMetricMode>("views");
+  const [audienceMode, setAudienceMode] = useState<FormatAudienceMode>("all");
+  const isInteractionMode = metricMode === "interactions";
+  const data = isInteractionMode ? interactions : views;
+  const metricModes: Array<{ key: FormatMetricMode; label: string }> = [
+    { key: "views", label: "Visualizações" },
+    { key: "interactions", label: "Interações" },
+  ];
+  const audienceModes: Array<{ key: FormatAudienceMode; label: string }> = [
+    { key: "all", label: "Total" },
+    { key: "followers", label: "Seguidores" },
+    { key: "nonFollowers", label: "Não seguidores" },
+  ];
+
+  return (
+    <div className="grid h-full gap-3">
+      <div className="flex flex-wrap gap-2">
+        {metricModes.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            onClick={() => setMetricMode(item.key)}
+            className={`rounded-full border px-2 py-1 text-[0.56rem] font-semibold uppercase tracking-[0.06em] transition sm:px-3 sm:py-1.5 sm:text-xs sm:tracking-[0.16em] ${
+              metricMode === item.key
+                ? "border-accent bg-accent text-white"
+                : "border-border-soft bg-background/50 text-muted hover:border-accent/45 hover:text-foreground"
+            }`}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {audienceModes.map((item) => {
+          const disabled = isInteractionMode && item.key !== "all";
+
+          return (
+            <button
+              key={item.key}
+              type="button"
+              disabled={disabled}
+              onClick={() => {
+                if (!disabled) {
+                  setAudienceMode(item.key);
+                }
+              }}
+              className={`rounded-full border px-2 py-1 text-[0.54rem] font-semibold uppercase tracking-[0.05em] transition sm:px-2.5 sm:text-[0.68rem] ${
+                audienceMode === item.key && !disabled
+                  ? "border-foreground/30 bg-foreground text-paper"
+                  : "border-border-soft bg-background/50 text-muted hover:border-accent/45 hover:text-foreground"
+              } ${disabled ? "cursor-not-allowed opacity-45 hover:border-border-soft hover:text-muted" : ""}`}
+            >
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
+      <div className="min-h-48 flex-1">
+        <HorizontalBreakdownChart
+          data={data}
+          emptyLabel={
+            isInteractionMode
+              ? "Interações por formato indisponíveis neste snapshot."
+              : "Visualizações por tipo de conteúdo indisponíveis neste snapshot."
+          }
+        />
+      </div>
+      {audienceMode !== "all" && !isInteractionMode ? (
+        <p className="text-xs leading-5 text-muted">
+          A Meta disponibiliza o recorte por seguidores e não seguidores para o
+          total de visualizações. O cruzamento com formato depende de confirmação
+          da API.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function LocationBreakdownChart({
+  cities,
+  countries,
+}: {
+  cities: InstagramBreakdownItem[];
+  countries: InstagramBreakdownItem[];
+}) {
+  const [mode, setMode] = useState<LocationMode>("cities");
+  const data = mode === "cities" ? cities : countries;
+  const modes: Array<{ key: LocationMode; label: string }> = [
+    { key: "cities", label: "Cidades" },
+    { key: "countries", label: "Países" },
+  ];
+
+  return (
+    <div className="grid h-full gap-3">
+      <div className="flex flex-wrap gap-2">
+        {modes.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            onClick={() => setMode(item.key)}
+            className={`rounded-full border px-2.5 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.08em] transition sm:px-3 sm:py-1.5 sm:text-xs sm:tracking-[0.16em] ${
+              mode === item.key
+                ? "border-accent bg-accent text-white"
+                : "border-border-soft bg-background/50 text-muted hover:border-accent/45 hover:text-foreground"
+            }`}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+      <div className="min-h-52 flex-1">
+        {data.length ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={data}
+              layout="vertical"
+              margin={{ left: 12, right: 42, top: 8, bottom: 8 }}
+            >
+              <XAxis type="number" hide />
+              <YAxis
+                type="category"
+                dataKey="label"
+                width={96}
+                tickLine={false}
+                axisLine={false}
+                fontSize={12}
+              />
+              <Tooltip
+                formatter={(value) => formatPercent(Number(value))}
+                contentStyle={{ borderRadius: 8, borderColor: "rgba(62,60,54,0.18)" }}
+              />
+              <Bar dataKey="value" name="Público" fill={cityBarColor} radius={[0, 6, 6, 0]}>
+                <LabelList
+                  dataKey="value"
+                  position="right"
+                  formatter={(value) => formatPercent(value)}
+                  className="fill-foreground text-xs font-semibold"
+                />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <EmptyChart
+            label={
+              mode === "cities"
+                ? "Dados de cidade indisponíveis."
+                : "Dados de país indisponíveis."
+            }
+          />
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -363,22 +485,27 @@ export function MetricsCharts({
   performanceSeries,
   gender,
   cities,
+  countries,
   age,
   viewFollowerType,
   viewMediaProductType,
+  interactionMediaProductType,
 }: MetricsChartsProps) {
   const reportedGender = withoutUnreported(gender);
   const cleanCities = cities.map((city) => ({
     ...city,
     label: cleanCityLabel(city.label),
   }));
+  const cleanCountries = countries.map((country) => ({
+    ...country,
+    label: cleanCountryLabel(country.label),
+  }));
 
   return (
     <section className="grid min-w-0 gap-4 lg:grid-cols-2">
       <ChartCard
-        title="Performance diária"
+        title="Alcance diário"
         icon={TrendingUp}
-        contentClassName="h-auto"
       >
         <DailyPerformanceChart data={performanceSeries} />
       </ChartCard>
@@ -391,9 +518,9 @@ export function MetricsCharts({
       </ChartCard>
 
       <ChartCard title="Visualizações por formato" icon={Clapperboard}>
-        <HorizontalBreakdownChart
-          data={viewMediaProductType}
-          emptyLabel="Visualizações por tipo de conteúdo indisponíveis neste snapshot."
+        <FormatBreakdownChart
+          views={viewMediaProductType}
+          interactions={interactionMediaProductType}
         />
       </ChartCard>
 
@@ -459,42 +586,8 @@ export function MetricsCharts({
         )}
       </ChartCard>
 
-      <ChartCard title="Top cidades" icon={MapPin}>
-        {cleanCities.length ? (
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={cleanCities}
-              layout="vertical"
-              margin={{ left: 12, right: 42, top: 8, bottom: 8 }}
-            >
-              <XAxis type="number" hide />
-              <YAxis
-                type="category"
-                dataKey="label"
-                width={96}
-                tickLine={false}
-                axisLine={false}
-                fontSize={12}
-                tickFormatter={(value) => cleanCityLabel(String(value))}
-              />
-              <Tooltip
-                formatter={(value) => formatPercent(Number(value))}
-                labelFormatter={(value) => cleanCityLabel(String(value))}
-                contentStyle={{ borderRadius: 8, borderColor: "rgba(62,60,54,0.18)" }}
-              />
-              <Bar dataKey="value" name="Público" fill={cityBarColor} radius={[0, 6, 6, 0]}>
-                <LabelList
-                  dataKey="value"
-                  position="right"
-                  formatter={(value) => formatPercent(value)}
-                  className="fill-foreground text-xs font-semibold"
-                />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        ) : (
-          <EmptyChart label="Dados de cidade indisponíveis." />
-        )}
+      <ChartCard title="Top localizações" icon={MapPin}>
+        <LocationBreakdownChart cities={cleanCities} countries={cleanCountries} />
       </ChartCard>
 
       <ChartCard title="Faixa etária" icon={BarChart3}>

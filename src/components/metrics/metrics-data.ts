@@ -332,6 +332,23 @@ function filterVisibleShareBreakdown(items: InstagramBreakdownItem[]) {
   });
 }
 
+function buildInteractionBreakdownByMediaProductType(
+  items: MetricsSnapshotRow["top_content"],
+) {
+  return filterVisibleShareBreakdown(
+    groupBreakdownByLabel(
+      items
+        .map((item) => ({
+          label: makeMediaProductTypeLabel(
+            item.media_product_type ?? item.media_type ?? "Posts",
+          ),
+          value: Number(item.total_interactions ?? 0),
+        }))
+        .filter((item) => item.value > 0),
+    ),
+  );
+}
+
 function makeMediaProductTypeLabel(label: string) {
   const normalized = label.trim().toUpperCase();
 
@@ -558,6 +575,9 @@ export function buildMetricsViewModel(
           overview.views_by_media_product_type ?? [],
           makeMediaProductTypeLabel,
         ),
+      ),
+      interactionMediaProductType: buildInteractionBreakdownByMediaProductType(
+        snapshot.top_content,
       ),
     },
     demographics: buildDemographics(snapshot),

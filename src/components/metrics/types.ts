@@ -57,8 +57,11 @@ export type MetricsViewModel = {
   viewBreakdowns: {
     followerType: InstagramBreakdownItem[];
     mediaProductType: InstagramBreakdownItem[];
+    interactionMediaProductType: InstagramBreakdownItem[];
   };
-  demographics: InstagramSnapshot["demographics"];
+  demographics: InstagramSnapshot["demographics"] & {
+    country: InstagramBreakdownItem[];
+  };
   stories: StoriesSummary;
   topContent: RankedContentItem[];
 };

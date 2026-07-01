@@ -137,6 +137,9 @@ describe("buildMetricsViewModel", () => {
       { label: "Stories", value: 500 },
       { label: "Posts", value: 200 },
     ]);
+    expect(viewModel.viewBreakdowns.interactionMediaProductType).toEqual([
+      { label: "Reels", value: 228 },
+    ]);
     expect(viewModel.stories).toMatchObject({
       totalStories: 1,
       totalViews: 400,

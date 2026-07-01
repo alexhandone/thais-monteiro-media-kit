@@ -204,9 +204,13 @@ export default async function MetricsPage({ params }: MetricsPageProps) {
             performanceSeries={viewModel.performanceSeries}
             gender={viewModel.demographics.gender}
             cities={viewModel.demographics.city}
+            countries={viewModel.demographics.country}
             age={viewModel.demographics.age}
             viewFollowerType={viewModel.viewBreakdowns.followerType}
             viewMediaProductType={viewModel.viewBreakdowns.mediaProductType}
+            interactionMediaProductType={
+              viewModel.viewBreakdowns.interactionMediaProductType
+            }
           />
 
           <StoriesInsights stories={viewModel.stories} />

@@ -140,6 +140,7 @@ function ExternalTooltip({
 
 function DailyPerformanceChart({ data }: { data: PerformancePoint[] }) {
   const [mode, setMode] = useState<DailyMode>("both");
+  const hasDailyViews = data.some((point) => point.views > 0);
 
   if (!data.length) {
     return <EmptyChart label="Série diária indisponível neste snapshot." />;
@@ -150,24 +151,34 @@ function DailyPerformanceChart({ data }: { data: PerformancePoint[] }) {
     { key: "reach", label: "Alcance" },
     { key: "views", label: "Visualizações" },
   ];
+  const effectiveMode = hasDailyViews ? mode : "reach";
 
   return (
     <div className="grid gap-4">
       <div className="flex flex-wrap gap-2">
-        {modes.map((item) => (
-          <button
-            key={item.key}
-            type="button"
-            onClick={() => setMode(item.key)}
-            className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] transition ${
-              mode === item.key
-                ? "border-accent bg-accent text-white"
-                : "border-border-soft bg-background/50 text-muted hover:border-accent/45 hover:text-foreground"
-            }`}
-          >
-            {item.label}
-          </button>
-        ))}
+        {modes.map((item) => {
+          const disabled = item.key === "views" && !hasDailyViews;
+
+          return (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => {
+                if (!disabled) {
+                  setMode(item.key);
+                }
+              }}
+              disabled={disabled}
+              className={`rounded-full border px-2 py-1 text-[0.56rem] font-semibold uppercase tracking-[0.06em] transition sm:px-3 sm:py-1.5 sm:text-xs sm:tracking-[0.16em] ${
+                effectiveMode === item.key
+                  ? "border-accent bg-accent text-white"
+                  : "border-border-soft bg-background/50 text-muted hover:border-accent/45 hover:text-foreground"
+              } ${disabled ? "cursor-not-allowed opacity-45 hover:border-border-soft hover:text-muted" : ""}`}
+            >
+              {item.label}
+            </button>
+          );
+        })}
       </div>
 
       <div className="h-64 min-w-0 overflow-hidden">
@@ -188,24 +199,24 @@ function DailyPerformanceChart({ data }: { data: PerformancePoint[] }) {
               ]}
               contentStyle={{ borderRadius: 8, borderColor: "rgba(62,60,54,0.18)" }}
             />
-            {mode === "both" || mode === "reach" ? (
+            {effectiveMode === "both" || effectiveMode === "reach" ? (
               <Area
                 type="monotone"
                 dataKey="reach"
                 name="reach"
                 stroke="#ef1f3d"
                 fill="#ef1f3d"
-                fillOpacity={mode === "both" ? 0.1 : 0.16}
+                fillOpacity={effectiveMode === "both" ? 0.1 : 0.16}
               />
             ) : null}
-            {mode === "both" || mode === "views" ? (
+            {effectiveMode === "both" || effectiveMode === "views" ? (
               <Area
                 type="monotone"
                 dataKey="views"
                 name="views"
                 stroke="#3e3c36"
                 fill="#3e3c36"
-                fillOpacity={mode === "both" ? 0.08 : 0.14}
+                fillOpacity={effectiveMode === "both" ? 0.08 : 0.14}
               />
             ) : null}
           </AreaChart>

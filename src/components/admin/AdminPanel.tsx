@@ -6,6 +6,8 @@ import {
   KeyRound,
   LogOut,
   Mail,
+  Eye,
+  EyeOff,
   RefreshCw,
   Save,
   ShieldCheck,
@@ -182,6 +184,8 @@ export function AdminPanel() {
   const [newUserName, setNewUserName] = useState("");
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserPasswordConfirmation, setNewUserPasswordConfirmation] = useState("");
+  const [showNewUserPassword, setShowNewUserPassword] = useState(false);
 
   async function runAction<T>(
     action: string,
@@ -372,6 +376,14 @@ export function AdminPanel() {
   }
 
   async function createUser() {
+    if (newUserPassword !== newUserPasswordConfirmation) {
+      setRequestState({
+        type: "error",
+        message: "As senhas não conferem.",
+      });
+      return;
+    }
+
     await runAction(
       "create-user",
       async () =>
@@ -391,6 +403,8 @@ export function AdminPanel() {
     setNewUserName("");
     setNewUserEmail("");
     setNewUserPassword("");
+    setNewUserPasswordConfirmation("");
+    setShowNewUserPassword(false);
     await loadUsers();
   }
 
@@ -500,9 +514,13 @@ export function AdminPanel() {
             name={newUserName}
             email={newUserEmail}
             password={newUserPassword}
+            passwordConfirmation={newUserPasswordConfirmation}
+            showPassword={showNewUserPassword}
             setName={setNewUserName}
             setEmail={setNewUserEmail}
             setPassword={setNewUserPassword}
+            setPasswordConfirmation={setNewUserPasswordConfirmation}
+            setShowPassword={setShowNewUserPassword}
             createUser={createUser}
             isBusy={isBusy}
           />
@@ -721,9 +739,13 @@ function UsersTab(props: {
   name: string;
   email: string;
   password: string;
+  passwordConfirmation: string;
+  showPassword: boolean;
   setName: (value: string) => void;
   setEmail: (value: string) => void;
   setPassword: (value: string) => void;
+  setPasswordConfirmation: (value: string) => void;
+  setShowPassword: (value: boolean) => void;
   createUser: () => void;
   isBusy: boolean;
 }) {
@@ -736,7 +758,26 @@ function UsersTab(props: {
         <div className="grid gap-4">
           <Field label="Nome" value={props.name} onChange={props.setName} />
           <Field label="E-mail" value={props.email} onChange={props.setEmail} type="email" />
-          <Field label="Senha" value={props.password} onChange={props.setPassword} type="password" />
+          <Field
+            label="Senha"
+            value={props.password}
+            onChange={props.setPassword}
+            type={props.showPassword ? "text" : "password"}
+          />
+          <Field
+            label="Confirmar senha"
+            value={props.passwordConfirmation}
+            onChange={props.setPasswordConfirmation}
+            type={props.showPassword ? "text" : "password"}
+          />
+          <button
+            type="button"
+            onClick={() => props.setShowPassword(!props.showPassword)}
+            className="inline-flex items-center justify-center gap-2 border border-[#1f1e1a]/10 bg-white/60 px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#6d675f] transition hover:border-[#ef2346] hover:text-[#ef2346]"
+          >
+            {props.showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+            {props.showPassword ? "Ocultar senhas" : "Mostrar senhas"}
+          </button>
           <PrimaryButton onClick={props.createUser} disabled={props.isBusy}>
             <UserPlus size={16} /> Cadastrar
           </PrimaryButton>

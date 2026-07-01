@@ -316,12 +316,12 @@ describe("buildMetricsViewModel", () => {
         {
           label: "Visualizações de reels e posts",
           value: "+100%",
-          changeLabel: "em relação ao período anterior",
+          changeLabel: "em relação à coleta anterior",
         },
         {
           label: "Visualizações de não seguidores",
           value: "+50%",
-          changeLabel: "em relação ao período anterior",
+          changeLabel: "em relação à coleta anterior",
         },
       ]),
     );

@@ -37,6 +37,11 @@ export function StoriesInsights({ stories }: StoriesInsightsProps) {
       icon: PlaySquare,
     },
     {
+      label: "Total de visualizações",
+      value: formatNumber(stories.totalViews),
+      icon: TrendingUp,
+    },
+    {
       label: "Média de visualizações",
       value: formatNumber(stories.averageViewsPerStory),
       icon: TrendingUp,

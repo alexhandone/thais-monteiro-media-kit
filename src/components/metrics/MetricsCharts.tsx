@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { BarChart3, Clapperboard, MapPin, TrendingUp, UsersRound } from "lucide-react";
 import {
   Area,
@@ -28,6 +29,8 @@ type MetricsChartsProps = {
   viewFollowerType: InstagramBreakdownItem[];
   viewMediaProductType: InstagramBreakdownItem[];
 };
+
+type DailyMode = "both" | "reach" | "views";
 
 const chartColors = ["#ef1f3d", "#f45b70", "#f08a99", "#7a1f2d", "#3e3c36"];
 const cityBarColor = "#ef1f3d";
@@ -70,6 +73,10 @@ function withPercent(items: InstagramBreakdownItem[]) {
   }));
 }
 
+function withoutUnreported(items: InstagramBreakdownItem[]) {
+  return items.filter((item) => item.label.trim().toLowerCase() !== "não informado");
+}
+
 function EmptyChart({ label }: { label: string }) {
   return (
     <div className="grid min-h-64 place-items-center rounded-lg border border-dashed border-border-soft bg-paper/45 p-6 text-center text-sm leading-6 text-muted">
@@ -101,6 +108,110 @@ function ChartCard({
         {children}
       </div>
     </article>
+  );
+}
+
+function ExternalTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: Array<{ payload?: { label?: string; percent?: number; value?: number } }>;
+}) {
+  if (!active || !payload?.length) {
+    return null;
+  }
+
+  const item = payload[0]?.payload;
+
+  if (!item) {
+    return null;
+  }
+
+  return (
+    <div className="rounded-md border border-border-soft bg-paper px-3 py-2 text-xs shadow-[0_12px_30px_rgba(36,35,31,0.14)]">
+      <p className="font-semibold text-foreground">{item.label}</p>
+      <p className="mt-1 text-muted">
+        {formatPercent(item.percent)} · {formatNumber(Number(item.value ?? 0))}
+      </p>
+    </div>
+  );
+}
+
+function DailyPerformanceChart({ data }: { data: PerformancePoint[] }) {
+  const [mode, setMode] = useState<DailyMode>("both");
+
+  if (!data.length) {
+    return <EmptyChart label="Série diária indisponível neste snapshot." />;
+  }
+
+  const modes: Array<{ key: DailyMode; label: string }> = [
+    { key: "both", label: "Ambos" },
+    { key: "reach", label: "Alcance" },
+    { key: "views", label: "Visualizações" },
+  ];
+
+  return (
+    <div className="grid gap-4">
+      <div className="flex flex-wrap gap-2">
+        {modes.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            onClick={() => setMode(item.key)}
+            className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] transition ${
+              mode === item.key
+                ? "border-accent bg-accent text-white"
+                : "border-border-soft bg-background/50 text-muted hover:border-accent/45 hover:text-foreground"
+            }`}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="h-64 min-w-0 overflow-hidden">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ left: 0, right: 8 }}>
+            <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={12} />
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              fontSize={12}
+              width={54}
+              tickFormatter={(value) => formatNumber(Number(value))}
+            />
+            <Tooltip
+              formatter={(value, name) => [
+                formatNumber(Number(value)),
+                name === "views" ? "Visualizações" : "Alcance",
+              ]}
+              contentStyle={{ borderRadius: 8, borderColor: "rgba(62,60,54,0.18)" }}
+            />
+            {mode === "both" || mode === "reach" ? (
+              <Area
+                type="monotone"
+                dataKey="reach"
+                name="reach"
+                stroke="#ef1f3d"
+                fill="#ef1f3d"
+                fillOpacity={mode === "both" ? 0.1 : 0.16}
+              />
+            ) : null}
+            {mode === "both" || mode === "views" ? (
+              <Area
+                type="monotone"
+                dataKey="views"
+                name="views"
+                stroke="#3e3c36"
+                fill="#3e3c36"
+                fillOpacity={mode === "both" ? 0.08 : 0.14}
+              />
+            ) : null}
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
   );
 }
 
@@ -196,11 +307,10 @@ function AudienceDonutChart({
               ))}
             </Pie>
             <Tooltip
-              formatter={(value, _name, item) => [
-                `${formatNumber(Number(value))} visualizações`,
-                formatPercent(item.payload.percent),
-              ]}
-              contentStyle={{ borderRadius: 8, borderColor: "rgba(62,60,54,0.18)" }}
+              position={{ x: 8, y: 8 }}
+              allowEscapeViewBox={{ x: true, y: true }}
+              content={<ExternalTooltip />}
+              wrapperStyle={{ pointerEvents: "none" }}
             />
           </PieChart>
         </ResponsiveContainer>
@@ -246,7 +356,7 @@ export function MetricsCharts({
   viewFollowerType,
   viewMediaProductType,
 }: MetricsChartsProps) {
-  const hasDailyViews = performanceSeries.some((point) => point.views > 0);
+  const reportedGender = withoutUnreported(gender);
   const cleanCities = cities.map((city) => ({
     ...city,
     label: cleanCityLabel(city.label),
@@ -255,47 +365,11 @@ export function MetricsCharts({
   return (
     <section className="grid min-w-0 gap-4 lg:grid-cols-2">
       <ChartCard
-        title={hasDailyViews ? "Alcance e visualizações" : "Alcance diário"}
+        title="Performance diária"
         icon={TrendingUp}
+        contentClassName="h-auto"
       >
-        {performanceSeries.length ? (
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={performanceSeries} margin={{ left: 0, right: 8 }}>
-              <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={12} />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                fontSize={12}
-                width={54}
-                tickFormatter={(value) => formatNumber(Number(value))}
-              />
-              <Tooltip
-                formatter={(value) => formatNumber(Number(value))}
-                contentStyle={{ borderRadius: 8, borderColor: "rgba(62,60,54,0.18)" }}
-              />
-              <Area
-                type="monotone"
-                dataKey="reach"
-                name="Alcance"
-                stroke="#ef1f3d"
-                fill="#ef1f3d"
-                fillOpacity={0.14}
-              />
-              {hasDailyViews ? (
-                <Area
-                  type="monotone"
-                  dataKey="views"
-                  name="Visualizações"
-                  stroke="#3e3c36"
-                  fill="#3e3c36"
-                  fillOpacity={0.1}
-                />
-              ) : null}
-            </AreaChart>
-          </ResponsiveContainer>
-        ) : (
-          <EmptyChart label="Série diária indisponível neste snapshot." />
-        )}
+        <DailyPerformanceChart data={performanceSeries} />
       </ChartCard>
 
       <ChartCard title="Visualizações por público" icon={UsersRound} contentClassName="h-auto">
@@ -313,20 +387,20 @@ export function MetricsCharts({
       </ChartCard>
 
       <ChartCard title="Gênero" icon={UsersRound} contentClassName="h-auto">
-        {gender.length ? (
+        {reportedGender.length ? (
           <div className="grid gap-4">
             <div className="relative h-56 min-w-0 overflow-hidden">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={gender}
+                    data={reportedGender}
                     dataKey="value"
                     nameKey="label"
                     innerRadius="54%"
                     outerRadius="78%"
                     paddingAngle={3}
                   >
-                    {gender.map((entry, index) => (
+                    {reportedGender.map((entry, index) => (
                       <Cell
                         key={entry.label}
                         fill={chartColors[index % chartColors.length]}
@@ -334,12 +408,14 @@ export function MetricsCharts({
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value) => formatPercent(Number(value))}
-                    contentStyle={{ borderRadius: 8, borderColor: "rgba(62,60,54,0.18)" }}
+                    position={{ x: 8, y: 8 }}
+                    allowEscapeViewBox={{ x: true, y: true }}
+                    content={<ExternalTooltip />}
+                    wrapperStyle={{ pointerEvents: "none" }}
                   />
                 </PieChart>
               </ResponsiveContainer>
-              {gender.map((entry, index) => (
+              {reportedGender.map((entry, index) => (
                 <span
                   key={`${entry.label}-label`}
                   className={`pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground/82 px-2 py-1 text-[0.68rem] font-bold leading-none text-paper shadow-[0_8px_20px_rgba(0,0,0,0.16)] ${
@@ -351,7 +427,7 @@ export function MetricsCharts({
               ))}
             </div>
             <ul className="grid gap-2 text-sm text-muted sm:grid-cols-2">
-              {gender.map((entry, index) => (
+              {reportedGender.map((entry, index) => (
                 <li
                   key={entry.label}
                   className="flex min-w-0 items-center justify-between gap-3 rounded-md bg-background/60 px-3 py-2"

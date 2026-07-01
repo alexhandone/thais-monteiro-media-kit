@@ -86,15 +86,15 @@ async function getLatestSnapshot(
 
 async function getPreviousSnapshot(
   supabase: ReturnType<typeof createServiceRoleSupabaseClient>,
-  currentPeriodStart: string,
+  currentCollectedAt: string,
 ) {
   const { data, error } = await supabase
     .from("instagram_metric_snapshots")
     .select(
       "period_start, period_end, collected_at, profile, overview_metrics, demographics, top_content, raw_api_payload",
     )
-    .lt("period_end", currentPeriodStart)
-    .order("period_end", { ascending: false })
+    .lt("collected_at", currentCollectedAt)
+    .order("collected_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
@@ -145,7 +145,7 @@ export default async function MetricsPage({ params }: MetricsPageProps) {
   const stories = await getRecentStorySnapshots(30);
   const previousSnapshot = await getPreviousSnapshot(
     access.supabase,
-    String(snapshot.period_start),
+    String(snapshot.collected_at),
   );
   const viewModel = buildComparedMetricsViewModelSafe(
     { ...snapshot, stories },

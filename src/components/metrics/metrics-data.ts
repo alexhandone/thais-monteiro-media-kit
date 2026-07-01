@@ -390,7 +390,7 @@ function formatChangeLabel(change: number | null) {
     return null;
   }
 
-  return "em relação ao período anterior";
+  return "em relação à coleta anterior";
 }
 
 function formatChangeValue(change: number | null) {

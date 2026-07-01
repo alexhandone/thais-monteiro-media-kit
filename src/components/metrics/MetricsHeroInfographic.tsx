@@ -21,17 +21,17 @@ type MetricsHeroInfographicProps = {
 const primaryMetricLabels = [
   "Seguidores",
   "Alcance",
-  "VisualizaÃ§Ãµes",
+  "Visualizações",
   "Visitas ao perfil",
   "Contas engajadas",
-  "InteraÃ§Ãµes",
+  "Interações",
 ];
 
 const secondaryMetricLabels = [
-  "PublicaÃ§Ãµes",
+  "Publicações",
   "Seguindo",
   "Cliques no link",
-  "Seguidores lÃ­quidos",
+  "Seguidores líquidos",
   "Visualizações de reels e posts",
   "Visualizações de não seguidores",
 ];
@@ -176,19 +176,19 @@ export function MetricsHeroInfographic({
         <div className="grid items-start gap-5 sm:grid-cols-[0.8fr_1.4fr_0.8fr]">
           <div className="text-xs leading-5 text-muted sm:text-sm">
             <p className="font-semibold uppercase tracking-[0.22em] text-foreground">
-              PerÃ­odo
+              Período
             </p>
             <p>{periodLabel}</p>
           </div>
           <div className="text-left sm:text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted">
-              Instagram - Ãºltimos 30 dias
+              Instagram - últimos 30 dias
             </p>
             <h1
               id="metrics-hero-title"
               className="mt-2 font-editorial text-[3.35rem] font-normal leading-[0.86] text-foreground sm:text-7xl lg:text-8xl"
             >
-              Painel AnalÃ­tico
+              Painel Analítico
             </h1>
             <p className="mt-2 text-sm font-medium text-muted">{profileHandle}</p>
           </div>

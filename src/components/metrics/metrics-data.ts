@@ -232,26 +232,20 @@ function buildPerformanceSeries(rawPayload: unknown) {
 }
 
 function repairMojibake(value: string) {
-  return value
-    .replaceAll("ÃƒÂ¡", "á")
-    .replaceAll("Ãƒ ", "à")
-    .replaceAll("ÃƒÂ¢", "â")
-    .replaceAll("ÃƒÂ£", "ã")
-    .replaceAll("ÃƒÂ©", "é")
-    .replaceAll("ÃƒÂª", "ê")
-    .replaceAll("ÃƒÂ­", "í")
-    .replaceAll("ÃƒÂ³", "ó")
-    .replaceAll("ÃƒÂ´", "ô")
-    .replaceAll("ÃƒÂµ", "õ")
-    .replaceAll("ÃƒÂº", "ú")
-    .replaceAll("ÃƒÂ§", "ç")
-    .replaceAll("ÃƒÂ", "Á")
-    .replaceAll("Ãƒâ€°", "É")
-    .replaceAll("ÃƒÅ ", "Ê")
-    .replaceAll("Ãƒâ€¡", "Ç")
-    .replaceAll("Ãƒ", "")
-    .replaceAll("Ã‚", "")
-    .replaceAll("\uFFFD", "");
+  let repaired = value;
+
+  for (let index = 0; index < 2 && /[ÃÂ]/.test(repaired); index += 1) {
+    try {
+      const bytes = Uint8Array.from(repaired, (character) =>
+        character.charCodeAt(0) & 0xff,
+      );
+      repaired = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    } catch {
+      break;
+    }
+  }
+
+  return repaired.replaceAll("\uFFFD", "");
 }
 
 function makeShortCaption(caption: string) {
@@ -301,7 +295,11 @@ function makeGenderLabel(label: string) {
 function makeFollowerTypeLabel(label: string) {
   const normalized = label.trim().toUpperCase();
 
-  if (normalized.includes("NON") || normalized.includes("NAO")) {
+  if (
+    normalized.includes("NON") ||
+    normalized.includes("NAO") ||
+    normalized.includes("UNKNOWN")
+  ) {
     return "Não seguidores";
   }
 
@@ -312,10 +310,32 @@ function makeFollowerTypeLabel(label: string) {
   return repairMojibake(label);
 }
 
+function groupBreakdownByLabel(items: InstagramBreakdownItem[]) {
+  const grouped = new Map<string, number>();
+
+  for (const item of items) {
+    grouped.set(item.label, (grouped.get(item.label) ?? 0) + item.value);
+  }
+
+  return [...grouped.entries()].map(([label, value]) => ({ label, value }));
+}
+
+function filterVisibleShareBreakdown(items: InstagramBreakdownItem[]) {
+  const total = items.reduce((sum, item) => sum + Number(item.value ?? 0), 0);
+
+  return items.filter((item) => {
+    const normalizedLabel = item.label.trim().toUpperCase();
+    const value = Number(item.value ?? 0);
+    const share = total ? (value / total) * 100 : 0;
+
+    return value > 0 && share >= 0.05 && normalizedLabel !== "DEFAULT_DO_NOT_USE";
+  });
+}
+
 function makeMediaProductTypeLabel(label: string) {
   const normalized = label.trim().toUpperCase();
 
-  if (normalized.includes("REELS")) {
+  if (normalized.includes("REEL")) {
     return "Reels";
   }
 
@@ -370,10 +390,18 @@ function formatChangeLabel(change: number | null) {
     return null;
   }
 
+  return "em relação ao período anterior";
+}
+
+function formatChangeValue(change: number | null) {
+  if (change === null) {
+    return "Indisponível";
+  }
+
   const rounded = Math.round(change);
   const prefix = rounded > 0 ? "+" : "";
 
-  return `${prefix}${rounded}% em relação ao período anterior`;
+  return `${prefix}${rounded}%`;
 }
 
 function buildComparisonCards(
@@ -402,25 +430,22 @@ function buildComparisonCards(
     makeFollowerTypeLabel,
     ["Não seguidores"],
   );
+  const reelsAndPostsChange = percentageChange(reelsAndPosts, previousReelsAndPosts);
+  const nonFollowersChange = percentageChange(nonFollowers, previousNonFollowers);
 
   return [
     {
       label: "Visualizações de reels e posts",
-      value: reelsAndPosts ? formatNumber(reelsAndPosts) : "Indisponível",
-      changeLabel: formatChangeLabel(
-        percentageChange(reelsAndPosts, previousReelsAndPosts),
-      ),
+      value: formatChangeValue(reelsAndPostsChange),
+      changeLabel: formatChangeLabel(reelsAndPostsChange),
     },
     {
       label: "Visualizações de não seguidores",
-      value: nonFollowers ? formatNumber(nonFollowers) : "Indisponível",
-      changeLabel: formatChangeLabel(
-        percentageChange(nonFollowers, previousNonFollowers),
-      ),
+      value: formatChangeValue(nonFollowersChange),
+      changeLabel: formatChangeLabel(nonFollowersChange),
     },
   ];
 }
-
 function buildDemographics(
   snapshot: MetricsSnapshotRow,
 ): MetricsSnapshotRow["demographics"] {
@@ -522,13 +547,17 @@ export function buildMetricsViewModel(
     ],
     performanceSeries: buildPerformanceSeries(snapshot.raw_api_payload),
     viewBreakdowns: {
-      followerType: mapBreakdownLabels(
-        overview.views_by_follower_type ?? [],
-        makeFollowerTypeLabel,
+      followerType: groupBreakdownByLabel(
+        mapBreakdownLabels(
+          overview.views_by_follower_type ?? [],
+          makeFollowerTypeLabel,
+        ),
       ),
-      mediaProductType: mapBreakdownLabels(
-        overview.views_by_media_product_type ?? [],
-        makeMediaProductTypeLabel,
+      mediaProductType: filterVisibleShareBreakdown(
+        mapBreakdownLabels(
+          overview.views_by_media_product_type ?? [],
+          makeMediaProductTypeLabel,
+        ),
       ),
     },
     demographics: buildDemographics(snapshot),

@@ -161,4 +161,169 @@ describe("buildMetricsViewModel", () => {
 
     expect(buildMetricsViewModelSafe(invalidSnapshot)).toBeNull();
   });
+
+  it("adds UNKNOWN audience views to non-followers", () => {
+    const snapshot: MetricsSnapshotRow = {
+      period_start: "2026-06-01",
+      period_end: "2026-07-01",
+      collected_at: "2026-07-01T12:00:00.000Z",
+      profile: {
+        id: "ig-1",
+        username: "thais.msilva",
+        name: "Thais",
+        followers_count: 7000,
+        follows_count: 1000,
+        media_count: 100,
+        profile_picture_url: null,
+      },
+      overview_metrics: {
+        reach: 1000,
+        views: 1876211,
+        profile_views: 0,
+        profile_links_taps: 0,
+        accounts_engaged: 0,
+        total_interactions: 0,
+        follows_and_unfollows: 0,
+        views_by_follower_type: [
+          { label: "NON_FOLLOWER", value: 625 },
+          { label: "FOLLOWER", value: 369 },
+          { label: "UNKNOWN", value: 6 },
+        ],
+        views_by_media_product_type: [],
+      },
+      demographics: {
+        gender: [],
+        age: [],
+        city: [],
+        country: [],
+      },
+      top_content: [],
+      stories: [],
+      raw_api_payload: {},
+    };
+
+    expect(buildMetricsViewModel(snapshot).viewBreakdowns.followerType).toEqual([
+      { label: "Não seguidores", value: 631 },
+      { label: "Seguidores", value: 369 },
+    ]);
+  });
+
+  it("removes zero-value media formats from the format breakdown", () => {
+    const snapshot: MetricsSnapshotRow = {
+      period_start: "2026-06-01",
+      period_end: "2026-07-01",
+      collected_at: "2026-07-01T12:00:00.000Z",
+      profile: {
+        id: "ig-1",
+        username: "thais.msilva",
+        name: "Thais",
+        followers_count: 7000,
+        follows_count: 1000,
+        media_count: 100,
+        profile_picture_url: null,
+      },
+      overview_metrics: {
+        reach: 1000,
+        views: 1000,
+        profile_views: 0,
+        profile_links_taps: 0,
+        accounts_engaged: 0,
+        total_interactions: 0,
+        follows_and_unfollows: 0,
+        views_by_follower_type: [],
+        views_by_media_product_type: [
+          { label: "REEL", value: 1151037 },
+          { label: "STORY", value: 636374 },
+          { label: "CAROUSEL", value: 86851 },
+          { label: "FEED", value: 1921 },
+          { label: "IGTV", value: 22 },
+          { label: "DEFAULT_DO_NOT_USE", value: 6 },
+        ],
+      },
+      demographics: {
+        gender: [],
+        age: [],
+        city: [],
+        country: [],
+      },
+      top_content: [],
+      stories: [],
+      raw_api_payload: {},
+    };
+
+    expect(buildMetricsViewModel(snapshot).viewBreakdowns.mediaProductType).toEqual([
+      { label: "Reels", value: 1151037 },
+      { label: "Stories", value: 636374 },
+      { label: "Carrossel", value: 86851 },
+      { label: "Posts", value: 1921 },
+    ]);
+  });
+
+  it("uses percentage growth as the main value for comparison cards", () => {
+    const snapshot: MetricsSnapshotRow = {
+      period_start: "2026-06-01",
+      period_end: "2026-07-01",
+      collected_at: "2026-07-01T12:00:00.000Z",
+      profile: {
+        id: "ig-1",
+        username: "thais.msilva",
+        name: "Thais",
+        followers_count: 7000,
+        follows_count: 1000,
+        media_count: 100,
+        profile_picture_url: null,
+      },
+      overview_metrics: {
+        reach: 1000,
+        views: 2000,
+        profile_views: 0,
+        profile_links_taps: 0,
+        accounts_engaged: 0,
+        total_interactions: 0,
+        follows_and_unfollows: 0,
+        views_by_follower_type: [{ label: "NON_FOLLOWER", value: 1500 }],
+        views_by_media_product_type: [
+          { label: "REELS", value: 800 },
+          { label: "FEED", value: 200 },
+        ],
+      },
+      demographics: {
+        gender: [],
+        age: [],
+        city: [],
+        country: [],
+      },
+      top_content: [],
+      stories: [],
+      raw_api_payload: {},
+    };
+    const previousSnapshot: MetricsSnapshotRow = {
+      ...snapshot,
+      period_start: "2026-05-01",
+      period_end: "2026-05-31",
+      overview_metrics: {
+        ...snapshot.overview_metrics,
+        views_by_follower_type: [{ label: "NON_FOLLOWER", value: 1000 }],
+        views_by_media_product_type: [
+          { label: "REELS", value: 400 },
+          { label: "FEED", value: 100 },
+        ],
+      },
+    };
+
+    expect(buildMetricsViewModel(snapshot, previousSnapshot).overviewCards).toEqual(
+      expect.arrayContaining([
+        {
+          label: "Visualizações de reels e posts",
+          value: "+100%",
+          changeLabel: "em relação ao período anterior",
+        },
+        {
+          label: "Visualizações de não seguidores",
+          value: "+50%",
+          changeLabel: "em relação ao período anterior",
+        },
+      ]),
+    );
+  });
 });

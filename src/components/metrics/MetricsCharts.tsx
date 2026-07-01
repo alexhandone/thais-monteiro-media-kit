@@ -159,6 +159,85 @@ function HorizontalBreakdownChart({
   );
 }
 
+function AudienceDonutChart({
+  data,
+  emptyLabel,
+}: {
+  data: InstagramBreakdownItem[];
+  emptyLabel: string;
+}) {
+  const chartData = withPercent(data);
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+
+  if (!chartData.length) {
+    return <EmptyChart label={emptyLabel} />;
+  }
+
+  return (
+    <div className="grid h-full min-h-64 min-w-0 items-center gap-4 sm:grid-cols-[minmax(0,1fr)_0.82fr]">
+      <div className="relative h-56 min-w-0 overflow-hidden sm:h-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={chartData}
+              dataKey="value"
+              nameKey="label"
+              innerRadius="58%"
+              outerRadius="82%"
+              paddingAngle={3}
+              startAngle={90}
+              endAngle={-270}
+            >
+              {chartData.map((entry, index) => (
+                <Cell
+                  key={entry.label}
+                  fill={chartColors[index % chartColors.length]}
+                />
+              ))}
+            </Pie>
+            <Tooltip
+              formatter={(value, _name, item) => [
+                `${formatNumber(Number(value))} visualizações`,
+                formatPercent(item.payload.percent),
+              ]}
+              contentStyle={{ borderRadius: 8, borderColor: "rgba(62,60,54,0.18)" }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+        <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
+          <div>
+            <p className="text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-muted">
+              Total
+            </p>
+            <p className="mt-1 text-lg font-semibold leading-none text-foreground">
+              {formatNumber(total)}
+            </p>
+          </div>
+        </div>
+      </div>
+      <ul className="grid gap-2 text-sm text-muted">
+        {chartData.map((entry, index) => (
+          <li
+            key={entry.label}
+            className="flex min-w-0 items-center justify-between gap-3 rounded-md bg-background/60 px-3 py-2"
+          >
+            <span className="flex min-w-0 items-center gap-2">
+              <span
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: chartColors[index % chartColors.length] }}
+              />
+              <span className="truncate">{entry.label}</span>
+            </span>
+            <strong className="shrink-0 text-foreground">
+              {formatPercent(entry.percent)}
+            </strong>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export function MetricsCharts({
   performanceSeries,
   gender,
@@ -219,8 +298,8 @@ export function MetricsCharts({
         )}
       </ChartCard>
 
-      <ChartCard title="Visualizações por público" icon={UsersRound}>
-        <HorizontalBreakdownChart
+      <ChartCard title="Visualizações por público" icon={UsersRound} contentClassName="h-auto">
+        <AudienceDonutChart
           data={viewFollowerType}
           emptyLabel="Participação de seguidores e não seguidores indisponível neste snapshot."
         />

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { isAuthorizedAdminRequest } from "@/lib/admin-auth";
+import { isAuthorizedAdminApiRequest } from "@/lib/admin-session";
 import { getServerEnv } from "@/lib/env";
 import { graphGet } from "@/lib/instagram/client";
 import { updateMetaTokenTestStatus } from "@/lib/meta-token";
@@ -13,7 +13,7 @@ const metaTokenTestSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  if (!isAuthorizedAdminRequest(request)) {
+  if (!(await isAuthorizedAdminApiRequest(request))) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 

@@ -344,6 +344,83 @@ function mapBreakdownLabels(
   }));
 }
 
+function sumBreakdownByLabels(
+  items: InstagramBreakdownItem[] | undefined,
+  formatter: (label: string) => string,
+  labels: string[],
+) {
+  const wanted = new Set(labels.map((label) => label.toLowerCase()));
+
+  return (items ?? []).reduce((sum, item) => {
+    const label = formatter(item.label).toLowerCase();
+    return wanted.has(label) ? sum + Number(item.value ?? 0) : sum;
+  }, 0);
+}
+
+function percentageChange(current: number, previous: number) {
+  if (!Number.isFinite(current) || !Number.isFinite(previous) || previous <= 0) {
+    return null;
+  }
+
+  return ((current - previous) / previous) * 100;
+}
+
+function formatChangeLabel(change: number | null) {
+  if (change === null) {
+    return null;
+  }
+
+  const rounded = Math.round(change);
+  const prefix = rounded > 0 ? "+" : "";
+
+  return `${prefix}${rounded}% em relação ao período anterior`;
+}
+
+function buildComparisonCards(
+  snapshot: MetricsSnapshotRow,
+  previousSnapshot?: MetricsSnapshotRow | null,
+) {
+  const currentOverview = snapshot.overview_metrics;
+  const previousOverview = previousSnapshot?.overview_metrics;
+  const reelsAndPosts = sumBreakdownByLabels(
+    currentOverview.views_by_media_product_type,
+    makeMediaProductTypeLabel,
+    ["Reels", "Posts"],
+  );
+  const previousReelsAndPosts = sumBreakdownByLabels(
+    previousOverview?.views_by_media_product_type,
+    makeMediaProductTypeLabel,
+    ["Reels", "Posts"],
+  );
+  const nonFollowers = sumBreakdownByLabels(
+    currentOverview.views_by_follower_type,
+    makeFollowerTypeLabel,
+    ["Não seguidores"],
+  );
+  const previousNonFollowers = sumBreakdownByLabels(
+    previousOverview?.views_by_follower_type,
+    makeFollowerTypeLabel,
+    ["Não seguidores"],
+  );
+
+  return [
+    {
+      label: "Visualizações de reels e posts",
+      value: reelsAndPosts ? formatNumber(reelsAndPosts) : "Indisponível",
+      changeLabel: formatChangeLabel(
+        percentageChange(reelsAndPosts, previousReelsAndPosts),
+      ),
+    },
+    {
+      label: "Visualizações de não seguidores",
+      value: nonFollowers ? formatNumber(nonFollowers) : "Indisponível",
+      changeLabel: formatChangeLabel(
+        percentageChange(nonFollowers, previousNonFollowers),
+      ),
+    },
+  ];
+}
+
 function buildDemographics(
   snapshot: MetricsSnapshotRow,
 ): MetricsSnapshotRow["demographics"] {
@@ -386,13 +463,28 @@ function buildStoriesSummary(
 
   const totalStories = stories?.length ?? 0;
   const totalViews = stories?.reduce((sum, story) => sum + story.metrics.views, 0) ?? 0;
+  const totalReach = stories?.reduce((sum, story) => sum + story.metrics.reach, 0) ?? 0;
+  const totalInteractions =
+    stories?.reduce((sum, story) => sum + story.metrics.total_interactions, 0) ?? 0;
+  const totalReplies =
+    stories?.reduce((sum, story) => sum + story.metrics.replies, 0) ?? 0;
+  const totalShares =
+    stories?.reduce((sum, story) => sum + story.metrics.shares, 0) ?? 0;
   const totalLinkClicks =
     stories?.reduce((sum, story) => sum + story.metrics.link_clicks, 0) ?? 0;
 
   return {
     totalStories,
     totalViews,
+    totalReach,
+    totalInteractions,
+    totalReplies,
+    totalShares,
     averageViewsPerStory: totalStories ? Math.round(totalViews / totalStories) : 0,
+    averageReachPerStory: totalStories ? Math.round(totalReach / totalStories) : 0,
+    averageInteractionsPerStory: totalStories
+      ? Math.round(totalInteractions / totalStories)
+      : 0,
     totalLinkClicks,
     averageLinkClicksPerStory: totalStories
       ? Math.round(totalLinkClicks / totalStories)
@@ -406,6 +498,7 @@ function buildStoriesSummary(
 
 export function buildMetricsViewModel(
   snapshot: MetricsSnapshotRow,
+  previousSnapshot?: MetricsSnapshotRow | null,
 ): MetricsViewModel {
   const { profile, overview_metrics: overview } = snapshot;
   const followsAndUnfollows = Number(overview.follows_and_unfollows ?? 0);
@@ -425,6 +518,7 @@ export function buildMetricsViewModel(
       { label: "Contas engajadas", value: formatNumber(overview.accounts_engaged) },
       { label: "Interações", value: formatNumber(overview.total_interactions) },
       { label: "Seguidores líquidos", value: formatNumber(followsAndUnfollows) },
+      ...buildComparisonCards(snapshot, previousSnapshot),
     ],
     performanceSeries: buildPerformanceSeries(snapshot.raw_api_payload),
     viewBreakdowns: {
@@ -456,4 +550,18 @@ export function parseMetricsSnapshot(snapshot: unknown): MetricsSnapshotRow | nu
 export function buildMetricsViewModelSafe(snapshot: unknown): MetricsViewModel | null {
   const parsedSnapshot = parseMetricsSnapshot(snapshot);
   return parsedSnapshot ? buildMetricsViewModel(parsedSnapshot) : null;
+}
+
+export function buildComparedMetricsViewModelSafe(
+  snapshot: unknown,
+  previousSnapshot: unknown,
+): MetricsViewModel | null {
+  const parsedSnapshot = parseMetricsSnapshot(snapshot);
+  const parsedPreviousSnapshot = previousSnapshot
+    ? parseMetricsSnapshot(previousSnapshot)
+    : null;
+
+  return parsedSnapshot
+    ? buildMetricsViewModel(parsedSnapshot, parsedPreviousSnapshot)
+    : null;
 }

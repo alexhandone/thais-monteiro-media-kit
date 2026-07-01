@@ -6,7 +6,7 @@ import { MetricsHeroInfographic } from "@/components/metrics/MetricsHeroInfograp
 import { MetricsCharts } from "@/components/metrics/MetricsCharts";
 import { MetricsStatus } from "@/components/metrics/MetricsStatus";
 import { StoriesInsights } from "@/components/metrics/StoriesInsights";
-import { buildMetricsViewModelSafe } from "@/components/metrics/metrics-data";
+import { buildComparedMetricsViewModelSafe } from "@/components/metrics/metrics-data";
 import { SiteHeader } from "@/components/public/SiteHeader";
 import { Footer } from "@/components/shared/Footer";
 import { WhatsAppFloatingButton } from "@/components/shared/WhatsAppFloatingButton";
@@ -84,6 +84,27 @@ async function getLatestSnapshot(
   return data;
 }
 
+async function getPreviousSnapshot(
+  supabase: ReturnType<typeof createServiceRoleSupabaseClient>,
+  currentPeriodStart: string,
+) {
+  const { data, error } = await supabase
+    .from("instagram_metric_snapshots")
+    .select(
+      "period_start, period_end, collected_at, profile, overview_metrics, demographics, top_content, raw_api_payload",
+    )
+    .lt("period_end", currentPeriodStart)
+    .order("period_end", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Unable to load previous Instagram snapshot: ${error.message}`);
+  }
+
+  return data;
+}
+
 export default async function MetricsPage({ params }: MetricsPageProps) {
   const { token } = await params;
   const access = await validateToken(token);
@@ -122,7 +143,14 @@ export default async function MetricsPage({ params }: MetricsPageProps) {
   }
 
   const stories = await getRecentStorySnapshots(30);
-  const viewModel = buildMetricsViewModelSafe({ ...snapshot, stories });
+  const previousSnapshot = await getPreviousSnapshot(
+    access.supabase,
+    String(snapshot.period_start),
+  );
+  const viewModel = buildComparedMetricsViewModelSafe(
+    { ...snapshot, stories },
+    previousSnapshot ? { ...previousSnapshot, stories: [] } : null,
+  );
 
   if (!viewModel) {
     return (

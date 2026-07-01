@@ -1,4 +1,4 @@
-import Image from "next/image";
+﻿import Image from "next/image";
 import {
   Activity,
   BarChart3,
@@ -21,17 +21,19 @@ type MetricsHeroInfographicProps = {
 const primaryMetricLabels = [
   "Seguidores",
   "Alcance",
-  "Visualizações",
+  "VisualizaÃ§Ãµes",
   "Visitas ao perfil",
   "Contas engajadas",
-  "Interações",
+  "InteraÃ§Ãµes",
 ];
 
 const secondaryMetricLabels = [
-  "Publicações",
+  "PublicaÃ§Ãµes",
   "Seguindo",
   "Cliques no link",
-  "Seguidores líquidos",
+  "Seguidores lÃ­quidos",
+  "Visualizações de reels e posts",
+  "Visualizações de não seguidores",
 ];
 
 const metricPositions = [
@@ -92,9 +94,9 @@ function normalizeMetricLabel(label: string) {
   return label
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
-    .replaceAll("Ã§", "c")
-    .replaceAll("Ãµ", "o")
-    .replaceAll("Ã­", "i")
+    .replaceAll("ÃƒÂ§", "c")
+    .replaceAll("ÃƒÂµ", "o")
+    .replaceAll("ÃƒÂ­", "i")
     .toLowerCase();
 }
 
@@ -174,19 +176,19 @@ export function MetricsHeroInfographic({
         <div className="grid items-start gap-5 sm:grid-cols-[0.8fr_1.4fr_0.8fr]">
           <div className="text-xs leading-5 text-muted sm:text-sm">
             <p className="font-semibold uppercase tracking-[0.22em] text-foreground">
-              Período
+              PerÃ­odo
             </p>
             <p>{periodLabel}</p>
           </div>
           <div className="text-left sm:text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted">
-              Instagram - últimos 30 dias
+              Instagram - Ãºltimos 30 dias
             </p>
             <h1
               id="metrics-hero-title"
               className="mt-2 font-editorial text-[3.35rem] font-normal leading-[0.86] text-foreground sm:text-7xl lg:text-8xl"
             >
-              Painel Analítico
+              Painel AnalÃ­tico
             </h1>
             <p className="mt-2 text-sm font-medium text-muted">{profileHandle}</p>
           </div>
@@ -228,23 +230,30 @@ export function MetricsHeroInfographic({
         </div>
 
         {secondaryCards.length ? (
-          <div className="grid gap-2 border-t border-foreground/10 pt-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-2 border-t border-foreground/10 pt-4 sm:grid-cols-2 lg:grid-cols-3">
             {secondaryCards.map((card) => (
               <article
                 key={card.label}
                 className="flex min-w-0 items-center justify-between gap-4 bg-background/42 px-4 py-3"
               >
-                <p className="flex min-w-0 items-center gap-2 truncate text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-muted">
-                  {(() => {
-                    const Icon =
-                      secondaryMetricIcons[
-                        secondaryCards.findIndex((item) => item.label === card.label) %
-                          secondaryMetricIcons.length
-                      ];
-                    return <Icon size={13} className="shrink-0 text-accent" aria-hidden="true" />;
-                  })()}
-                  <span className="truncate">{card.label}</span>
-                </p>
+                <div className="min-w-0">
+                  <p className="flex min-w-0 items-center gap-2 truncate text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-muted">
+                    {(() => {
+                      const Icon =
+                        secondaryMetricIcons[
+                          secondaryCards.findIndex((item) => item.label === card.label) %
+                            secondaryMetricIcons.length
+                        ];
+                      return <Icon size={13} className="shrink-0 text-accent" aria-hidden="true" />;
+                    })()}
+                    <span className="truncate">{card.label}</span>
+                  </p>
+                  {card.changeLabel ? (
+                    <p className="mt-1 text-xs font-medium text-emerald-700">
+                      {card.changeLabel}
+                    </p>
+                  ) : null}
+                </div>
                 <p className="shrink-0 text-lg font-semibold text-foreground">
                   {card.value}
                 </p>

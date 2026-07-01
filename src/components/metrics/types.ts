@@ -9,6 +9,7 @@ export type MetricsSnapshotRow = InstagramSnapshot;
 export type OverviewCard = {
   label: string;
   value: string;
+  changeLabel?: string | null;
 };
 
 export type PerformancePoint = {
@@ -28,7 +29,13 @@ export type StoryDailyPoint = {
 export type StoriesSummary = {
   totalStories: number;
   totalViews: number;
+  totalReach: number;
+  totalInteractions: number;
+  totalReplies: number;
+  totalShares: number;
   averageViewsPerStory: number;
+  averageReachPerStory: number;
+  averageInteractionsPerStory: number;
   totalLinkClicks: number;
   averageLinkClicksPerStory: number;
   daily: StoryDailyPoint[];

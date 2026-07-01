@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { isAuthorizedAdminRequest } from "@/lib/admin-auth";
+import { isAuthorizedAdminApiRequest } from "@/lib/admin-session";
 import {
   getSavedMetaTokenStatus,
   saveMetaAccessToken,
@@ -14,7 +14,7 @@ const metaTokenSchema = z.object({
 });
 
 export async function GET(request: Request) {
-  if (!isAuthorizedAdminRequest(request)) {
+  if (!(await isAuthorizedAdminApiRequest(request))) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
@@ -31,7 +31,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  if (!isAuthorizedAdminRequest(request)) {
+  if (!(await isAuthorizedAdminApiRequest(request))) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 

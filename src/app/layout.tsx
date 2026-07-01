@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Birthstone, Cormorant_Garamond, Inter } from "next/font/google";
+import { PageViewTracker } from "@/components/shared/PageViewTracker";
 import "./globals.css";
 
 const birthstone = Birthstone({
@@ -51,7 +52,10 @@ export default function RootLayout({
       lang="pt-BR"
       className={`${birthstone.variable} ${cormorant.variable} ${inter.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <PageViewTracker />
+        {children}
+      </body>
     </html>
   );
 }

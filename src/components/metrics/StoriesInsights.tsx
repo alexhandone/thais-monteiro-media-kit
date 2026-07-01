@@ -1,6 +1,13 @@
 "use client";
 
-import { Link2, PlaySquare, TrendingUp } from "lucide-react";
+import {
+  HeartHandshake,
+  Link2,
+  MessageCircle,
+  PlaySquare,
+  Repeat2,
+  TrendingUp,
+} from "lucide-react";
 import {
   Area,
   AreaChart,
@@ -25,7 +32,7 @@ function formatNumber(value: number) {
 export function StoriesInsights({ stories }: StoriesInsightsProps) {
   const cards = [
     {
-      label: "Stories coletados",
+      label: "Stories analisados",
       value: formatNumber(stories.totalStories),
       icon: PlaySquare,
     },
@@ -33,6 +40,26 @@ export function StoriesInsights({ stories }: StoriesInsightsProps) {
       label: "Média de visualizações",
       value: formatNumber(stories.averageViewsPerStory),
       icon: TrendingUp,
+    },
+    {
+      label: "Alcance médio",
+      value: formatNumber(stories.averageReachPerStory),
+      icon: TrendingUp,
+    },
+    {
+      label: "Interações",
+      value: formatNumber(stories.totalInteractions),
+      icon: HeartHandshake,
+    },
+    {
+      label: "Respostas",
+      value: formatNumber(stories.totalReplies),
+      icon: MessageCircle,
+    },
+    {
+      label: "Compartilhamentos",
+      value: formatNumber(stories.totalShares),
+      icon: Repeat2,
     },
     {
       label: "Cliques em links",
@@ -49,16 +76,17 @@ export function StoriesInsights({ stories }: StoriesInsightsProps) {
             Stories
           </p>
           <h2 className="mt-2 font-editorial text-4xl font-normal leading-none text-foreground sm:text-5xl">
-            Coleta diária
+            Performance em stories
           </h2>
         </div>
         <p className="text-sm leading-6 text-muted">
-          A partir de agora, os stories são salvos diariamente para calcular média de
-          visualizações, cliques em links e evolução dos últimos 30 dias.
+          Leitura dos últimos 30 dias para campanhas que usam sequência de
+          stories, links, respostas e interações como principal ponto de
+          conversão.
         </p>
       </div>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-3">
+      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((card) => {
           const Icon = card.icon;
 
@@ -120,8 +148,8 @@ export function StoriesInsights({ stories }: StoriesInsightsProps) {
           </ResponsiveContainer>
         ) : (
           <div className="grid h-full place-items-center text-center text-sm leading-6 text-muted">
-            Ainda não há histórico diário de stories. A seção começará a preencher
-            após a primeira coleta diária.
+            Ainda não há histórico de stories suficiente. A seção começa a
+            preencher após as coletas diárias.
           </div>
         )}
       </div>

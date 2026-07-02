@@ -31,6 +31,12 @@ export const metadata: Metadata = {
   title: "Thais Monteiro | Mídia Kit",
   description:
     "Mídia kit digital de Thais Monteiro: lifestyle, maternidade, moda e rotina real.",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+  },
   openGraph: {
     title: "Thais Monteiro | Mídia Kit",
     description:

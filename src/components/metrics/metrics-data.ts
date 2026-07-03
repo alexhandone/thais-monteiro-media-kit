@@ -127,6 +127,11 @@ function formatNumber(value: number | null | undefined): string {
   return ptNumberFormatter.format(Number(value ?? 0));
 }
 
+function formatSignedNumber(value: number) {
+  const prefix = value > 0 ? "+" : "";
+  return `${prefix}${formatNumber(value)}`;
+}
+
 function dateFromIsoDay(value: string): Date {
   return new Date(`${value}T00:00:00.000Z`);
 }
@@ -382,19 +387,6 @@ function mapBreakdownLabels(
   }));
 }
 
-function sumBreakdownByLabels(
-  items: InstagramBreakdownItem[] | undefined,
-  formatter: (label: string) => string,
-  labels: string[],
-) {
-  const wanted = new Set(labels.map((label) => label.toLowerCase()));
-
-  return (items ?? []).reduce((sum, item) => {
-    const label = formatter(item.label).toLowerCase();
-    return wanted.has(label) ? sum + Number(item.value ?? 0) : sum;
-  }, 0);
-}
-
 function calculateNetFollowers(
   overview: MetricsSnapshotRow["overview_metrics"],
 ) {
@@ -421,12 +413,16 @@ function calculateNetFollowers(
   return follows || unfollows ? follows - unfollows : 0;
 }
 
-function percentageChange(current: number, previous: number) {
-  if (!Number.isFinite(current) || !Number.isFinite(previous) || previous <= 0) {
+function readMonthlyGrowthMetric(rawPayload: unknown, key: string) {
+  const raw = readRecord(rawPayload);
+  const monthlyGrowth = readRecord(raw?.monthly_growth);
+  const value = monthlyGrowth?.[key];
+
+  if (typeof value !== "number" || !Number.isFinite(value)) {
     return null;
   }
 
-  return ((current - previous) / previous) * 100;
+  return value;
 }
 
 function formatChangeLabel(change: number | null) {
@@ -434,7 +430,7 @@ function formatChangeLabel(change: number | null) {
     return null;
   }
 
-  return "em relação à coleta anterior";
+  return "comparado ao mês anterior";
 }
 
 function formatChangeValue(change: number | null) {
@@ -452,43 +448,44 @@ function buildComparisonCards(
   snapshot: MetricsSnapshotRow,
   previousSnapshot?: MetricsSnapshotRow | null,
 ) {
-  const currentOverview = snapshot.overview_metrics;
-  const previousOverview = previousSnapshot?.overview_metrics;
-  const reelsAndPosts = sumBreakdownByLabels(
-    currentOverview.views_by_media_product_type,
-    makeMediaProductTypeLabel,
-    ["Reels", "Posts"],
-  );
-  const previousReelsAndPosts = sumBreakdownByLabels(
-    previousOverview?.views_by_media_product_type,
-    makeMediaProductTypeLabel,
-    ["Reels", "Posts"],
-  );
-  const nonFollowers = sumBreakdownByLabels(
-    currentOverview.views_by_follower_type,
-    makeFollowerTypeLabel,
-    ["Não seguidores"],
-  );
-  const previousNonFollowers = sumBreakdownByLabels(
-    previousOverview?.views_by_follower_type,
-    makeFollowerTypeLabel,
-    ["Não seguidores"],
-  );
-  const reelsAndPostsChange = percentageChange(reelsAndPosts, previousReelsAndPosts);
-  const nonFollowersChange = percentageChange(nonFollowers, previousNonFollowers);
+  void previousSnapshot;
 
-  return [
-    {
+  const monthlyReelsAndPostsChange = readMonthlyGrowthMetric(
+    snapshot.raw_api_payload,
+    "reels_and_posts_growth",
+  );
+  const monthlyNonFollowersChange = readMonthlyGrowthMetric(
+    snapshot.raw_api_payload,
+    "non_followers_growth",
+  );
+
+  if (monthlyReelsAndPostsChange === null && monthlyNonFollowersChange === null) {
+    return [];
+  }
+
+  const reelsAndPostsChange = monthlyReelsAndPostsChange;
+  const nonFollowersChange = monthlyNonFollowersChange;
+  const cards: MetricsViewModel["overviewCards"] = [];
+
+  if (reelsAndPostsChange !== null && reelsAndPostsChange > 10) {
+    cards.push({
       label: "Visualizações de reels e posts",
       value: formatChangeValue(reelsAndPostsChange),
       changeLabel: formatChangeLabel(reelsAndPostsChange),
-    },
-    {
+      tone: "positive",
+    });
+  }
+
+  if (nonFollowersChange !== null && nonFollowersChange > 10) {
+    cards.push({
       label: "Visualizações de não seguidores",
       value: formatChangeValue(nonFollowersChange),
       changeLabel: formatChangeLabel(nonFollowersChange),
-    },
-  ];
+      tone: "positive",
+    });
+  }
+
+  return cards;
 }
 function buildDemographics(
   snapshot: MetricsSnapshotRow,
@@ -589,7 +586,11 @@ export function buildMetricsViewModel(
       { label: "Toques em links externos", value: formatNumber(externalLinkTaps) },
       { label: "Contas engajadas", value: formatNumber(overview.accounts_engaged) },
       { label: "Interações", value: formatNumber(overview.total_interactions) },
-      { label: "Seguidores líquidos", value: formatNumber(followsAndUnfollows) },
+      {
+        label: "Seguidores líquidos",
+        value: formatSignedNumber(followsAndUnfollows),
+        tone: followsAndUnfollows > 0 ? "positive" : undefined,
+      },
       ...buildComparisonCards(snapshot, previousSnapshot),
     ],
     performanceSeries: buildPerformanceSeries(snapshot.raw_api_payload),
@@ -612,12 +613,15 @@ export function buildMetricsViewModel(
     },
     demographics: buildDemographics(snapshot),
     stories: buildStoriesSummary(snapshot.stories ?? []),
-    topContent: snapshot.top_content.slice(0, 10).map((item, index) => ({
-      ...item,
-      rank: index + 1,
-      publishedAtLabel: formatPublishedAt(item.timestamp),
-      shortCaption: makeShortCaption(item.caption),
-    })),
+    topContent: [...snapshot.top_content]
+      .sort((a, b) => b.views - a.views)
+      .slice(0, 10)
+      .map((item, index) => ({
+        ...item,
+        rank: index + 1,
+        publishedAtLabel: formatPublishedAt(item.timestamp),
+        shortCaption: makeShortCaption(item.caption),
+      })),
   };
 }
 

@@ -33,7 +33,6 @@ type MetricsChartsProps = {
 };
 
 type FormatMetricMode = "views" | "interactions";
-type FormatAudienceMode = "all" | "followers" | "nonFollowers";
 type LocationMode = "cities" | "countries";
 
 const chartColors = ["#ef1f3d", "#f45b70", "#f08a99", "#7a1f2d", "#3e3c36"];
@@ -249,28 +248,23 @@ function FormatBreakdownChart({
   interactions: InstagramBreakdownItem[];
 }) {
   const [metricMode, setMetricMode] = useState<FormatMetricMode>("views");
-  const [audienceMode, setAudienceMode] = useState<FormatAudienceMode>("all");
   const isInteractionMode = metricMode === "interactions";
   const data = isInteractionMode ? interactions : views;
   const metricModes: Array<{ key: FormatMetricMode; label: string }> = [
     { key: "views", label: "Visualizações" },
     { key: "interactions", label: "Interações" },
   ];
-  const audienceModes: Array<{ key: FormatAudienceMode; label: string }> = [
-    { key: "all", label: "Total" },
-    { key: "followers", label: "Seguidores" },
-    { key: "nonFollowers", label: "Não seguidores" },
-  ];
 
   return (
     <div className="grid h-full gap-3">
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-1">
         {metricModes.map((item) => (
           <button
             key={item.key}
             type="button"
             onClick={() => setMetricMode(item.key)}
-            className={`rounded-full border px-2 py-0.5 text-[0.52rem] font-semibold uppercase tracking-[0.04em] transition sm:px-2.5 sm:py-1 sm:text-[0.62rem] sm:tracking-[0.1em] ${
+            style={{ fontSize: 10, letterSpacing: 0, textTransform: "none" }}
+            className={`rounded-full border px-2 py-1 font-medium leading-none transition ${
               metricMode === item.key
                 ? "border-accent bg-accent text-white"
                 : "border-border-soft bg-background/50 text-muted hover:border-accent/45 hover:text-foreground"
@@ -279,31 +273,6 @@ function FormatBreakdownChart({
             {item.label}
           </button>
         ))}
-      </div>
-      <div className="flex flex-wrap gap-1.5 border-t border-border-soft/80 pt-2">
-        {audienceModes.map((item) => {
-          const disabled = isInteractionMode && item.key !== "all";
-
-          return (
-            <button
-              key={item.key}
-              type="button"
-              disabled={disabled}
-              onClick={() => {
-                if (!disabled) {
-                  setAudienceMode(item.key);
-                }
-              }}
-              className={`rounded-full border px-2 py-0.5 text-[0.5rem] font-semibold uppercase tracking-[0.04em] transition sm:px-2.5 sm:py-1 sm:text-[0.58rem] sm:tracking-[0.08em] ${
-                audienceMode === item.key && !disabled
-                  ? "border-foreground/30 bg-foreground text-paper"
-                  : "border-border-soft bg-background/50 text-muted hover:border-accent/45 hover:text-foreground"
-              } ${disabled ? "cursor-not-allowed opacity-45 hover:border-border-soft hover:text-muted" : ""}`}
-            >
-              {item.label}
-            </button>
-          );
-        })}
       </div>
       <div className="min-h-56 flex-1 overflow-hidden sm:min-h-52">
         <HorizontalBreakdownChart
@@ -315,13 +284,6 @@ function FormatBreakdownChart({
           }
         />
       </div>
-      {audienceMode !== "all" && !isInteractionMode ? (
-        <p className="text-xs leading-5 text-muted">
-          A Meta disponibiliza o recorte por seguidores e não seguidores para o
-          total de visualizações. O cruzamento com formato depende de confirmação
-          da API.
-        </p>
-      ) : null}
     </div>
   );
 }
@@ -342,13 +304,14 @@ function LocationBreakdownChart({
 
   return (
     <div className="grid h-full gap-3">
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-1">
         {modes.map((item) => (
           <button
             key={item.key}
             type="button"
             onClick={() => setMode(item.key)}
-            className={`rounded-full border px-2 py-0.5 text-[0.52rem] font-semibold uppercase tracking-[0.04em] transition sm:px-2.5 sm:py-1 sm:text-[0.62rem] sm:tracking-[0.1em] ${
+            style={{ fontSize: 10, letterSpacing: 0, textTransform: "none" }}
+            className={`rounded-full border px-2 py-1 font-medium leading-none transition ${
               mode === item.key
                 ? "border-accent bg-accent text-white"
                 : "border-border-soft bg-background/50 text-muted hover:border-accent/45 hover:text-foreground"
@@ -517,7 +480,7 @@ export function MetricsCharts({
         />
       </ChartCard>
 
-      <ChartCard title="Visualizações por formato" icon={Clapperboard}>
+      <ChartCard title="Por formato" icon={Clapperboard}>
         <FormatBreakdownChart
           views={viewMediaProductType}
           interactions={interactionMediaProductType}

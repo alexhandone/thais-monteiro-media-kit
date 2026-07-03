@@ -55,6 +55,12 @@ const usersPayload = {
   ],
 };
 
+const settingsPayload = {
+  settings: {
+    showStoriesMetrics: true,
+  },
+};
+
 describe("AdminPanel users form", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -74,6 +80,10 @@ describe("AdminPanel users form", () => {
 
       if (url === "/api/admin/users" && !init?.method) {
         return Promise.resolve(mockJson(usersPayload));
+      }
+
+      if (url === "/api/admin/settings" && !init?.method) {
+        return Promise.resolve(mockJson(settingsPayload));
       }
 
       if (url === "/api/admin/users" && init?.method === "POST") {

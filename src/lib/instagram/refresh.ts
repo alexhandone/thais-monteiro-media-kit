@@ -57,12 +57,56 @@ type OverviewInsightRequest = {
   required: boolean;
 };
 
+type MonthRange = {
+  start: Date;
+  end: Date;
+};
+
 function isoDate(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
 function unixSeconds(date: Date): number {
   return Math.floor(date.getTime() / 1000);
+}
+
+function closedMonthRange(reference: Date, monthsBack: number): MonthRange {
+  const start = new Date(
+    Date.UTC(reference.getUTCFullYear(), reference.getUTCMonth() - monthsBack, 1),
+  );
+  const end = new Date(
+    Date.UTC(reference.getUTCFullYear(), reference.getUTCMonth() - monthsBack + 1, 1),
+  );
+
+  return { start, end };
+}
+
+function sumReelsAndPostsViews(overview: InstagramOverviewMetrics) {
+  return (overview.views_by_media_product_type ?? []).reduce((sum, item) => {
+    const label = item.label.trim().toUpperCase();
+    const isReelsOrPost =
+      label.includes("REEL") || label.includes("FEED") || label.includes("POST");
+
+    return isReelsOrPost ? sum + item.value : sum;
+  }, 0);
+}
+
+function sumNonFollowerViews(overview: InstagramOverviewMetrics) {
+  return (overview.views_by_follower_type ?? []).reduce((sum, item) => {
+    const label = item.label.trim().toUpperCase();
+    const isNonFollower =
+      label.includes("NON_FOLLOWER") || label.includes("NÃO SEGUIDOR");
+
+    return isNonFollower ? sum + item.value : sum;
+  }, 0);
+}
+
+function percentageChange(current: number, previous: number) {
+  if (previous <= 0) {
+    return null;
+  }
+
+  return ((current - previous) / previous) * 100;
 }
 
 export function buildOverviewInsightRequests(
@@ -178,7 +222,7 @@ export function selectRecentMediaCandidates(
         Number.isFinite(timestamp) && timestamp >= startTime && timestamp <= endTime
       );
     })
-    .slice(0, 20);
+    .slice(0, 50);
 }
 
 export function collectOptionalGraphError(
@@ -282,6 +326,64 @@ async function getOptionalDemographics(
   };
 }
 
+async function getOptionalClosedMonthGrowth(
+  accountId: string,
+  reference: Date,
+  errors: Record<string, string[]>,
+) {
+  const previousMonth = closedMonthRange(reference, 1);
+  const comparisonMonth = closedMonthRange(reference, 2);
+  const previousMonthInsights = await getOptionalAccountInsights(
+    accountId,
+    unixSeconds(previousMonth.start),
+    unixSeconds(previousMonth.end),
+    errors,
+  );
+  const comparisonMonthInsights = await getOptionalAccountInsights(
+    accountId,
+    unixSeconds(comparisonMonth.start),
+    unixSeconds(comparisonMonth.end),
+    errors,
+  );
+  const previousReelsAndPostsViews = sumReelsAndPostsViews(
+    previousMonthInsights.metrics,
+  );
+  const comparisonReelsAndPostsViews = sumReelsAndPostsViews(
+    comparisonMonthInsights.metrics,
+  );
+  const previousNonFollowersViews = sumNonFollowerViews(previousMonthInsights.metrics);
+  const comparisonNonFollowersViews = sumNonFollowerViews(
+    comparisonMonthInsights.metrics,
+  );
+
+  return {
+    previous_month: {
+      period_start: isoDate(previousMonth.start),
+      period_end: isoDate(previousMonth.end),
+      reels_and_posts_views: previousReelsAndPostsViews,
+      non_followers_views: previousNonFollowersViews,
+    },
+    comparison_month: {
+      period_start: isoDate(comparisonMonth.start),
+      period_end: isoDate(comparisonMonth.end),
+      reels_and_posts_views: comparisonReelsAndPostsViews,
+      non_followers_views: comparisonNonFollowersViews,
+    },
+    reels_and_posts_growth: percentageChange(
+      previousReelsAndPostsViews,
+      comparisonReelsAndPostsViews,
+    ),
+    non_followers_growth: percentageChange(
+      previousNonFollowersViews,
+      comparisonNonFollowersViews,
+    ),
+    raw: {
+      previous_month: previousMonthInsights.raw,
+      comparison_month: comparisonMonthInsights.raw,
+    },
+  };
+}
+
 async function getOptionalMediaInsights(
   mediaId: string,
   errors: Record<string, string[]>,
@@ -355,6 +457,11 @@ export async function refreshInstagramSnapshot(): Promise<InstagramSnapshot> {
   const errors: Record<string, string[]> = {};
   const overview = await getOptionalAccountInsights(accountId, since, until, errors);
   const demographics = await getOptionalDemographics(accountId, errors);
+  const monthlyGrowth = await getOptionalClosedMonthGrowth(
+    accountId,
+    periodEnd,
+    errors,
+  );
   const rawMediaInsights: Record<string, unknown> = {};
   const topContentCandidates: InstagramTopContentItem[] = [];
   const mediaCandidates = selectRecentMediaCandidates(
@@ -413,6 +520,7 @@ export async function refreshInstagramSnapshot(): Promise<InstagramSnapshot> {
       profile,
       overview: overview.raw,
       demographics: demographics.raw,
+      monthly_growth: monthlyGrowth,
       media,
       media_insights: rawMediaInsights,
       errors,

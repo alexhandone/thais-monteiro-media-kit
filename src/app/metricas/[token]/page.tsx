@@ -11,6 +11,7 @@ import { SiteHeader } from "@/components/public/SiteHeader";
 import { Footer } from "@/components/shared/Footer";
 import { WhatsAppFloatingButton } from "@/components/shared/WhatsAppFloatingButton";
 import { hashAccessToken } from "@/lib/access-token";
+import { getAppSettings } from "@/lib/app-settings";
 import { getServerEnv } from "@/lib/env";
 import { getRecentStorySnapshots } from "@/lib/instagram/stories";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase/server";
@@ -84,22 +85,25 @@ async function getLatestSnapshot(
   return data;
 }
 
-async function getPreviousSnapshot(
+async function getPreviousPeriodSnapshot(
   supabase: ReturnType<typeof createServiceRoleSupabaseClient>,
-  currentCollectedAt: string,
+  currentPeriodStart: string,
 ) {
   const { data, error } = await supabase
     .from("instagram_metric_snapshots")
     .select(
       "period_start, period_end, collected_at, profile, overview_metrics, demographics, top_content, raw_api_payload",
     )
-    .lt("collected_at", currentCollectedAt)
+    .lte("period_end", currentPeriodStart)
+    .order("period_end", { ascending: false })
     .order("collected_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
   if (error) {
-    throw new Error(`Unable to load previous Instagram snapshot: ${error.message}`);
+    throw new Error(
+      `Unable to load previous Instagram period snapshot: ${error.message}`,
+    );
   }
 
   return data;
@@ -142,11 +146,13 @@ export default async function MetricsPage({ params }: MetricsPageProps) {
     );
   }
 
-  const stories = await getRecentStorySnapshots(30);
-  const previousSnapshot = await getPreviousSnapshot(
-    access.supabase,
-    String(snapshot.collected_at),
-  );
+  const [appSettings, previousSnapshot] = await Promise.all([
+    getAppSettings(access.supabase),
+    getPreviousPeriodSnapshot(access.supabase, String(snapshot.period_start)),
+  ]);
+  const stories = appSettings.showStoriesMetrics
+    ? await getRecentStorySnapshots(30)
+    : [];
   const viewModel = buildComparedMetricsViewModelSafe(
     { ...snapshot, stories },
     previousSnapshot ? { ...previousSnapshot, stories: [] } : null,
@@ -213,7 +219,9 @@ export default async function MetricsPage({ params }: MetricsPageProps) {
             }
           />
 
-          <StoriesInsights stories={viewModel.stories} />
+          {appSettings.showStoriesMetrics ? (
+            <StoriesInsights stories={viewModel.stories} />
+          ) : null}
 
           <ContentRanking items={viewModel.topContent} />
           <InterestsEditorial />

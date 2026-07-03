@@ -133,7 +133,11 @@ function MetricCallout({
           {compactLabel(card.label)}
         </p>
       </div>
-      <p className="mt-1.5 whitespace-nowrap text-base font-semibold leading-none text-foreground sm:text-xl lg:text-2xl">
+      <p
+        className={`mt-1.5 whitespace-nowrap text-base font-semibold leading-none sm:text-xl lg:text-2xl ${
+          card.tone === "positive" ? "text-emerald-600" : "text-foreground"
+        }`}
+      >
         {card.value}
       </p>
     </article>
@@ -254,7 +258,13 @@ export function MetricsHeroInfographic({
                     </p>
                   ) : null}
                 </div>
-                <p className="shrink-0 text-lg font-semibold text-foreground">
+                <p
+                  className={`shrink-0 text-lg font-semibold ${
+                    card.tone === "positive"
+                      ? "text-emerald-600"
+                      : "text-foreground"
+                  }`}
+                >
                   {card.value}
                 </p>
               </article>

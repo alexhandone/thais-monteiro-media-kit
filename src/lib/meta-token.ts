@@ -19,6 +19,30 @@ type CachedMetaToken = {
   expiresAt: number;
 };
 
+type LongLivedTokenResponse = {
+  access_token?: string;
+  expires_in?: number;
+  token_type?: string;
+  error?: {
+    message?: string;
+  };
+};
+
+type AccountsResponse = {
+  data?: Array<{
+    id?: string;
+    name?: string;
+    access_token?: string;
+    instagram_business_account?: {
+      id?: string;
+      username?: string;
+    };
+  }>;
+  error?: {
+    message?: string;
+  };
+};
+
 let cachedMetaToken: CachedMetaToken | null = null;
 
 function deriveKey(secret: string) {
@@ -89,6 +113,99 @@ export function maskMetaAccessToken(token: string | null | undefined) {
 
 export function resetActiveMetaAccessTokenCache() {
   cachedMetaToken = null;
+}
+
+function requireMetaAppCredentials() {
+  const env = getServerEnv();
+
+  if (!env.META_APP_ID || !env.META_APP_SECRET) {
+    throw new Error(
+      "Configure META_APP_ID e META_APP_SECRET para converter o User Token automaticamente.",
+    );
+  }
+
+  return {
+    ...env,
+    META_APP_ID: env.META_APP_ID,
+    META_APP_SECRET: env.META_APP_SECRET,
+  };
+}
+
+async function graphJson<T>(path: string, params: Record<string, string>) {
+  const env = getServerEnv();
+  const searchParams = new URLSearchParams(params);
+  const response = await fetch(
+    `https://graph.facebook.com/${env.META_GRAPH_API_VERSION}/${path}?${searchParams.toString()}`,
+    { cache: "no-store" },
+  );
+  const payload = (await response.json().catch(() => ({}))) as T & {
+    error?: { message?: string };
+  };
+
+  if (!response.ok || payload.error) {
+    throw new Error(
+      `Meta Graph API error: ${payload.error?.message ?? response.statusText}`,
+    );
+  }
+
+  return payload;
+}
+
+async function exchangeForLongLivedUserToken(userToken: string) {
+  const env = requireMetaAppCredentials();
+  const payload = await graphJson<LongLivedTokenResponse>("oauth/access_token", {
+    grant_type: "fb_exchange_token",
+    client_id: env.META_APP_ID,
+    client_secret: env.META_APP_SECRET,
+    fb_exchange_token: userToken,
+  });
+
+  if (!payload.access_token) {
+    throw new Error("A Meta não retornou um token de usuário de longa duração.");
+  }
+
+  return {
+    token: payload.access_token,
+    expiresIn: payload.expires_in ?? null,
+  };
+}
+
+function selectConfiguredPageToken(
+  accounts: AccountsResponse,
+  pageId: string,
+  instagramAccountId: string,
+) {
+  const pages = accounts.data ?? [];
+  const page =
+    pages.find((item) => item.id === pageId) ??
+    pages.find((item) => item.instagram_business_account?.id === instagramAccountId);
+
+  if (!page?.access_token) {
+    throw new Error(
+      "Não foi possível encontrar a Page Access Token da página/Instagram configurados.",
+    );
+  }
+
+  return {
+    pageId: page.id ?? null,
+    pageName: page.name ?? null,
+    instagramAccount: page.instagram_business_account ?? null,
+    token: page.access_token,
+  };
+}
+
+async function getPageAccessTokenFromUserToken(userToken: string) {
+  const env = getServerEnv();
+  const accounts = await graphJson<AccountsResponse>("me/accounts", {
+    fields: "id,name,access_token,instagram_business_account{id,username}",
+    access_token: userToken,
+  });
+
+  return selectConfiguredPageToken(
+    accounts,
+    env.META_PAGE_ID,
+    env.META_INSTAGRAM_ACCOUNT_ID,
+  );
 }
 
 export async function getSavedMetaTokenStatus() {
@@ -188,6 +305,22 @@ export async function saveMetaAccessToken(token: string) {
   return {
     maskedToken: maskMetaAccessToken(token),
     updatedAt: now,
+  };
+}
+
+export async function exchangeAndSaveMetaUserToken(userToken: string) {
+  const longLivedUserToken = await exchangeForLongLivedUserToken(userToken);
+  const pageToken = await getPageAccessTokenFromUserToken(longLivedUserToken.token);
+  const saved = await saveMetaAccessToken(pageToken.token);
+
+  return {
+    ...saved,
+    page: {
+      id: pageToken.pageId,
+      name: pageToken.pageName,
+      instagramAccount: pageToken.instagramAccount,
+    },
+    userTokenExpiresIn: longLivedUserToken.expiresIn,
   };
 }
 

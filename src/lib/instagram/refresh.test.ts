@@ -152,12 +152,12 @@ describe("instagram refresh helpers", () => {
     });
   });
 
-  it("limits media insights candidates to the first 20 recent items", () => {
+  it("limits media insights candidates to the first 50 recent items", () => {
     const periodStart = new Date("2026-05-27T00:00:00.000Z");
     const periodEnd = new Date("2026-06-26T00:00:00.000Z");
-    const media = Array.from({ length: 25 }, (_, index) => ({
+    const media = Array.from({ length: 55 }, (_, index) => ({
       id: String(index),
-      timestamp: `2026-06-${String(25 - index).padStart(2, "0")}T12:00:00+0000`,
+      timestamp: `2026-06-25T12:${String(index).padStart(2, "0")}:00+0000`,
     })).concat([
       { id: "old", timestamp: "2026-05-01T12:00:00+0000" },
       { id: "missing" },
@@ -165,7 +165,7 @@ describe("instagram refresh helpers", () => {
 
     const selected = selectRecentMediaCandidates(media, periodStart, periodEnd);
 
-    expect(selected).toHaveLength(20);
+    expect(selected).toHaveLength(50);
     expect(selected.map((item) => item.id)).not.toContain("old");
     expect(selected.map((item) => item.id)).not.toContain("missing");
     expect(selected.at(0)?.id).toBe("0");

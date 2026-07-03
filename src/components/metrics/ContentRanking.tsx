@@ -131,7 +131,11 @@ export function ContentRanking({ items }: ContentRankingProps) {
               <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-accent/10 text-accent">
                 <Sigma size={14} aria-hidden />
               </span>
-              Totais do período
+              Totais do top 10 no período
+            </p>
+            <p className="mt-2 max-w-2xl text-xs leading-5 text-muted">
+              Soma calculada apenas com os 10 conteúdos de maior desempenho no
+              período selecionado.
             </p>
             <div className="mt-4 grid min-w-0 grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
               {totals.map((metric) => (

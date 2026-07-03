@@ -18,8 +18,8 @@ export default function Home() {
         <BioSection />
         <DifferentialsSection />
         <PartnersSection />
-        <MetricsCtaSection />
         <DeliverablesSection />
+        <MetricsCtaSection />
         <ContactSection />
       </main>
       <Footer />

@@ -55,7 +55,7 @@ describe("buildMetricsViewModel", () => {
         media_url: null,
         permalink: `https://instagram.com/p/${index}`,
         timestamp: "2026-06-20T10:00:00.000Z",
-        views: 120 - index,
+        views: index === 11 ? 900 : 120 - index,
         reach: 80 - index,
         likes: 10,
         comments: 2,
@@ -123,7 +123,8 @@ describe("buildMetricsViewModel", () => {
     });
     expect(viewModel.overviewCards).toContainEqual({
       label: "Seguidores líquidos",
-      value: "12",
+      value: "+12",
+      tone: "positive",
     });
     expect(viewModel.overviewCards).toContainEqual({
       label: "Toques em links externos",
@@ -139,7 +140,8 @@ describe("buildMetricsViewModel", () => {
 
     expect(buildMetricsViewModel(snapshotWithNetFollowers).overviewCards).toContainEqual({
       label: "Seguidores líquidos",
-      value: "1.122",
+      value: "+1.122",
+      tone: "positive",
     });
     expect(viewModel.performanceSeries).toEqual([
       { label: "24/06", reach: 100, views: 220 },
@@ -165,6 +167,7 @@ describe("buildMetricsViewModel", () => {
     });
     expect(viewModel.topContent).toHaveLength(10);
     expect(viewModel.topContent[0]?.rank).toBe(1);
+    expect(viewModel.topContent[0]?.id).toBe("media-11");
   });
 
   it("returns null for malformed Supabase JSONB instead of throwing", () => {
@@ -279,7 +282,7 @@ describe("buildMetricsViewModel", () => {
     ]);
   });
 
-  it("uses percentage growth as the main value for comparison cards", () => {
+  it("uses closed monthly growth as the main value for comparison cards", () => {
     const snapshot: MetricsSnapshotRow = {
       period_start: "2026-06-01",
       period_end: "2026-07-01",
@@ -315,34 +318,80 @@ describe("buildMetricsViewModel", () => {
       },
       top_content: [],
       stories: [],
-      raw_api_payload: {},
-    };
-    const previousSnapshot: MetricsSnapshotRow = {
-      ...snapshot,
-      period_start: "2026-05-01",
-      period_end: "2026-05-31",
-      overview_metrics: {
-        ...snapshot.overview_metrics,
-        views_by_follower_type: [{ label: "NON_FOLLOWER", value: 1000 }],
-        views_by_media_product_type: [
-          { label: "REELS", value: 400 },
-          { label: "FEED", value: 100 },
-        ],
+      raw_api_payload: {
+        monthly_growth: {
+          reels_and_posts_growth: 18.4,
+          non_followers_growth: 25.2,
+        },
       },
     };
 
-    expect(buildMetricsViewModel(snapshot, previousSnapshot).overviewCards).toEqual(
+    expect(buildMetricsViewModel(snapshot).overviewCards).toEqual(
       expect.arrayContaining([
         {
           label: "Visualizações de reels e posts",
-          value: "+100%",
-          changeLabel: "em relação à coleta anterior",
+          value: "+18%",
+          changeLabel: "comparado ao mês anterior",
+          tone: "positive",
         },
         {
           label: "Visualizações de não seguidores",
-          value: "+50%",
-          changeLabel: "em relação à coleta anterior",
+          value: "+25%",
+          changeLabel: "comparado ao mês anterior",
+          tone: "positive",
         },
+      ]),
+    );
+  });
+
+  it("hides monthly comparison cards when growth is not above ten percent", () => {
+    const snapshot: MetricsSnapshotRow = {
+      period_start: "2026-06-01",
+      period_end: "2026-07-01",
+      collected_at: "2026-07-01T12:00:00.000Z",
+      profile: {
+        id: "ig-1",
+        username: "thais.msilva",
+        name: "Thais",
+        followers_count: 7000,
+        follows_count: 1000,
+        media_count: 100,
+        profile_picture_url: null,
+      },
+      overview_metrics: {
+        reach: 1000,
+        views: 2000,
+        profile_views: 0,
+        profile_links_taps: 0,
+        accounts_engaged: 0,
+        total_interactions: 0,
+        follows_and_unfollows: 0,
+        views_by_follower_type: [{ label: "NON_FOLLOWER", value: 1500 }],
+        views_by_media_product_type: [
+          { label: "REELS", value: 800 },
+          { label: "FEED", value: 200 },
+        ],
+      },
+      demographics: {
+        gender: [],
+        age: [],
+        city: [],
+        country: [],
+      },
+      top_content: [],
+      stories: [],
+      raw_api_payload: {
+        monthly_growth: {
+          reels_and_posts_growth: 10,
+          non_followers_growth: -12,
+        },
+      },
+    };
+
+    expect(buildMetricsViewModel(snapshot).overviewCards).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: "Visualizações de reels e posts" }),
+        expect.objectContaining({ label: "Visualizações de não seguidores" }),
       ]),
     );
   });

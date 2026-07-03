@@ -12,6 +12,8 @@ import {
   Save,
   ShieldCheck,
   Sparkles,
+  ToggleLeft,
+  ToggleRight,
   UserPlus,
   Users,
 } from "lucide-react";
@@ -69,6 +71,10 @@ type DashboardPayload = {
     collected_at: string;
   } | null;
   metaToken: TokenStatus;
+};
+
+type AppSettingsPayload = {
+  showStoriesMetrics: boolean;
 };
 
 type AdminUserRow = AdminUser & {
@@ -167,6 +173,9 @@ function PrimaryButton({
 export function AdminPanel() {
   const [session, setSession] = useState<SessionPayload | null>(null);
   const [dashboard, setDashboard] = useState<DashboardPayload | null>(null);
+  const [settings, setSettings] = useState<AppSettingsPayload>({
+    showStoriesMetrics: true,
+  });
   const [users, setUsers] = useState<AdminUserRow[]>([]);
   const [activeTab, setActiveTab] = useState<"dashboard" | "metrics" | "users">(
     "dashboard",
@@ -237,6 +246,13 @@ export function AdminPanel() {
     setUsers(payload.users);
   }
 
+  async function loadSettings() {
+    const payload = (await parseJsonResponse(
+      await fetch("/api/admin/settings"),
+    )) as { settings: AppSettingsPayload };
+    setSettings(payload.settings);
+  }
+
   useEffect(() => {
     let mounted = true;
 
@@ -253,7 +269,7 @@ export function AdminPanel() {
         setSession(payload);
 
         if (payload.authenticated) {
-          await Promise.all([loadDashboard(), loadUsers()]);
+          await Promise.all([loadDashboard(), loadUsers(), loadSettings()]);
         }
       } catch {
         if (mounted) {
@@ -308,6 +324,7 @@ export function AdminPanel() {
     if (payload) {
       await loadSession();
       await loadDashboard();
+      await loadSettings();
       await loadUsers();
     }
   }
@@ -316,6 +333,7 @@ export function AdminPanel() {
     await fetch("/api/admin/logout", { method: "POST" });
     setSession({ authenticated: false, requiresSetup: false, user: null });
     setDashboard(null);
+    setSettings({ showStoriesMetrics: true });
     setUsers([]);
   }
 
@@ -352,6 +370,23 @@ export function AdminPanel() {
     await loadDashboard();
   }
 
+  async function exchangeUserToken() {
+    await runAction(
+      "exchange-token",
+      async () =>
+        parseJsonResponse(
+          await fetch("/api/admin/meta-token/exchange", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userToken: metaToken }),
+          }),
+        ),
+      "User Token convertido e Page Token salvo com segurança.",
+    );
+    setMetaToken("");
+    await loadDashboard();
+  }
+
   async function refreshMetrics() {
     await runAction(
       "metrics",
@@ -373,6 +408,32 @@ export function AdminPanel() {
         ),
       "Coleta de stories executada.",
     );
+  }
+
+  async function updateStoriesVisibility(showStoriesMetrics: boolean) {
+    const previousSettings = settings;
+    setSettings({ showStoriesMetrics });
+
+    const payload = await runAction(
+      "settings",
+      async () =>
+        parseJsonResponse(
+          await fetch("/api/admin/settings", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ showStoriesMetrics }),
+          }),
+        ),
+      showStoriesMetrics
+        ? "Seção de stories visível na página de métricas."
+        : "Seção de stories ocultada da página de métricas.",
+    );
+
+    if (payload) {
+      setSettings((payload as { settings: AppSettingsPayload }).settings);
+    } else {
+      setSettings(previousSettings);
+    }
   }
 
   async function createUser() {
@@ -498,12 +559,15 @@ export function AdminPanel() {
         {activeTab === "metrics" ? (
           <MetricsTab
             dashboard={dashboard}
+            settings={settings}
             metaToken={metaToken}
             setMetaToken={setMetaToken}
             testToken={testToken}
             saveToken={saveToken}
+            exchangeUserToken={exchangeUserToken}
             refreshMetrics={refreshMetrics}
             refreshStories={refreshStories}
+            updateStoriesVisibility={updateStoriesVisibility}
             isBusy={isBusy}
           />
         ) : null}
@@ -685,12 +749,15 @@ function LeadsTable({ leads }: { leads: DashboardPayload["latestLeads"] }) {
 
 function MetricsTab(props: {
   dashboard: DashboardPayload | null;
+  settings: AppSettingsPayload;
   metaToken: string;
   setMetaToken: (value: string) => void;
   testToken: () => void;
   saveToken: () => void;
+  exchangeUserToken: () => void;
   refreshMetrics: () => void;
   refreshStories: () => void;
+  updateStoriesVisibility: (showStoriesMetrics: boolean) => void;
   isBusy: boolean;
 }) {
   return (
@@ -699,22 +766,31 @@ function MetricsTab(props: {
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-[0.2em]">
           Token da Meta
         </h2>
-        <p className="mb-4 text-sm text-[#6d675f]">
+        <p className="mb-3 text-sm text-[#6d675f]">
           Token atual: {props.dashboard?.metaToken.maskedToken ?? "fallback do ambiente"}.
+        </p>
+        <p className="mb-4 text-sm leading-6 text-[#6d675f]">
+          Cole um User Token para converter automaticamente em Page Token de longa
+          duração, ou cole um Page Token pronto para salvar direto.
         </p>
         <textarea
           value={props.metaToken}
           onChange={(event) => props.setMetaToken(event.target.value)}
           className="min-h-32 w-full resize-y border border-[#1f1e1a]/10 bg-white px-4 py-3 font-mono text-xs outline-none transition focus:border-[#ef2346]"
-          placeholder="Cole aqui o Page Access Token da Meta"
+          placeholder="Cole aqui o User Token ou Page Access Token da Meta"
         />
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="mt-4 grid gap-3">
+          <PrimaryButton onClick={props.exchangeUserToken} disabled={props.isBusy}>
+            <KeyRound size={16} /> Converter User Token
+          </PrimaryButton>
+          <div className="grid gap-3 sm:grid-cols-2">
           <PrimaryButton onClick={props.testToken} disabled={props.isBusy}>
             <CheckCircle2 size={16} /> Testar
           </PrimaryButton>
           <PrimaryButton onClick={props.saveToken} disabled={props.isBusy}>
             <Save size={16} /> Salvar
           </PrimaryButton>
+          </div>
         </div>
       </article>
       <article className="border border-[#1f1e1a]/10 bg-white/65 p-5">
@@ -728,6 +804,38 @@ function MetricsTab(props: {
           <PrimaryButton onClick={props.refreshStories} disabled={props.isBusy}>
             <Sparkles size={16} /> Coletar stories
           </PrimaryButton>
+        </div>
+        <div className="mt-5 border border-[#1f1e1a]/10 bg-white/70 p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-[0.18em]">
+                Exibir stories
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-[#6d675f]">
+                Controle se a seção de performance em stories aparece na página
+                pública de métricas.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                props.updateStoriesVisibility(!props.settings.showStoriesMetrics)
+              }
+              disabled={props.isBusy}
+              className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-[0.65rem] font-semibold uppercase tracking-[0.12em] transition disabled:cursor-wait disabled:opacity-60 ${
+                props.settings.showStoriesMetrics
+                  ? "border-[#ef2346] bg-[#ef2346] text-white"
+                  : "border-[#1f1e1a]/15 bg-white text-[#6d675f]"
+              }`}
+            >
+              {props.settings.showStoriesMetrics ? (
+                <ToggleRight size={18} />
+              ) : (
+                <ToggleLeft size={18} />
+              )}
+              {props.settings.showStoriesMetrics ? "Visível" : "Oculto"}
+            </button>
+          </div>
         </div>
       </article>
     </section>

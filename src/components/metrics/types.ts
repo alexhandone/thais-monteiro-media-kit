@@ -10,6 +10,7 @@ export type OverviewCard = {
   label: string;
   value: string;
   changeLabel?: string | null;
+  tone?: "positive";
 };
 
 export type PerformancePoint = {

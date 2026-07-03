@@ -6,6 +6,8 @@ const serverEnvSchema = z.object({
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   META_GRAPH_API_VERSION: z.string().default("v25.0"),
+  META_APP_ID: z.string().min(1).optional(),
+  META_APP_SECRET: z.string().min(1).optional(),
   META_INSTAGRAM_ACCOUNT_ID: z.string().min(1),
   META_PAGE_ID: z.string().min(1),
   META_ACCESS_TOKEN: z.string().min(1),

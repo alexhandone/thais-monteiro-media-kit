@@ -189,7 +189,8 @@ export function AdminPanel() {
   const [setupPassword, setSetupPassword] = useState("");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-  const [metaToken, setMetaToken] = useState("");
+  const [metaUserToken, setMetaUserToken] = useState("");
+  const [metaPageToken, setMetaPageToken] = useState("");
   const [newUserName, setNewUserName] = useState("");
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("");
@@ -345,7 +346,9 @@ export function AdminPanel() {
           await fetch("/api/admin/meta-token/test", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(metaToken.trim() ? { token: metaToken } : {}),
+            body: JSON.stringify(
+              metaPageToken.trim() ? { token: metaPageToken } : {},
+            ),
           }),
         ),
       "Conexão com a Meta validada.",
@@ -361,12 +364,12 @@ export function AdminPanel() {
           await fetch("/api/admin/meta-token", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ token: metaToken }),
+            body: JSON.stringify({ token: metaPageToken }),
           }),
         ),
       "Token salvo com segurança.",
     );
-    setMetaToken("");
+    setMetaPageToken("");
     await loadDashboard();
   }
 
@@ -378,12 +381,12 @@ export function AdminPanel() {
           await fetch("/api/admin/meta-token/exchange", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userToken: metaToken }),
+            body: JSON.stringify({ userToken: metaUserToken }),
           }),
         ),
-      "User Token convertido e Page Token salvo com segurança.",
+      "User Token convertido, validado e Page Token salvo com segurança.",
     );
-    setMetaToken("");
+    setMetaUserToken("");
     await loadDashboard();
   }
 
@@ -560,8 +563,10 @@ export function AdminPanel() {
           <MetricsTab
             dashboard={dashboard}
             settings={settings}
-            metaToken={metaToken}
-            setMetaToken={setMetaToken}
+            metaUserToken={metaUserToken}
+            setMetaUserToken={setMetaUserToken}
+            metaPageToken={metaPageToken}
+            setMetaPageToken={setMetaPageToken}
             testToken={testToken}
             saveToken={saveToken}
             exchangeUserToken={exchangeUserToken}
@@ -750,8 +755,10 @@ function LeadsTable({ leads }: { leads: DashboardPayload["latestLeads"] }) {
 function MetricsTab(props: {
   dashboard: DashboardPayload | null;
   settings: AppSettingsPayload;
-  metaToken: string;
-  setMetaToken: (value: string) => void;
+  metaUserToken: string;
+  setMetaUserToken: (value: string) => void;
+  metaPageToken: string;
+  setMetaPageToken: (value: string) => void;
   testToken: () => void;
   saveToken: () => void;
   exchangeUserToken: () => void;
@@ -769,27 +776,46 @@ function MetricsTab(props: {
         <p className="mb-3 text-sm text-[#6d675f]">
           Token atual: {props.dashboard?.metaToken.maskedToken ?? "fallback do ambiente"}.
         </p>
-        <p className="mb-4 text-sm leading-6 text-[#6d675f]">
-          Cole um User Token para converter automaticamente em Page Token de longa
-          duração, ou cole um Page Token pronto para salvar direto.
-        </p>
-        <textarea
-          value={props.metaToken}
-          onChange={(event) => props.setMetaToken(event.target.value)}
-          className="min-h-32 w-full resize-y border border-[#1f1e1a]/10 bg-white px-4 py-3 font-mono text-xs outline-none transition focus:border-[#ef2346]"
-          placeholder="Cole aqui o User Token ou Page Access Token da Meta"
-        />
-        <div className="mt-4 grid gap-3">
+        <div className="rounded-md border border-[#ef2346]/15 bg-[#ef2346]/5 p-4">
+          <h3 className="text-xs font-semibold uppercase tracking-[0.18em]">
+            Caminho recomendado
+          </h3>
+          <p className="mt-2 text-sm leading-6 text-[#6d675f]">
+            Cole aqui o User Token gerado no Graph API Explorer. O sistema converte,
+            valida e salva automaticamente o Page Token correto para as coletas.
+          </p>
+          <textarea
+            value={props.metaUserToken}
+            onChange={(event) => props.setMetaUserToken(event.target.value)}
+            className="mt-3 min-h-28 w-full resize-y border border-[#1f1e1a]/10 bg-white px-4 py-3 font-mono text-xs outline-none transition focus:border-[#ef2346]"
+            placeholder="Cole aqui o User Token da Meta"
+          />
           <PrimaryButton onClick={props.exchangeUserToken} disabled={props.isBusy}>
-            <KeyRound size={16} /> Converter User Token
+            <KeyRound size={16} /> Converter e salvar
           </PrimaryButton>
+        </div>
+
+        <div className="mt-4 rounded-md border border-[#1f1e1a]/10 bg-white/60 p-4">
+          <h3 className="text-xs font-semibold uppercase tracking-[0.18em]">
+            Avançado: Page Token manual
+          </h3>
+          <p className="mt-2 text-sm leading-6 text-[#6d675f]">
+            Use esta área apenas se você já tiver o Page Access Token pronto.
+            Testar e salvar aqui não converte User Token.
+          </p>
+          <textarea
+            value={props.metaPageToken}
+            onChange={(event) => props.setMetaPageToken(event.target.value)}
+            className="mt-3 min-h-24 w-full resize-y border border-[#1f1e1a]/10 bg-white px-4 py-3 font-mono text-xs outline-none transition focus:border-[#ef2346]"
+            placeholder="Cole aqui um Page Access Token pronto"
+          />
           <div className="grid gap-3 sm:grid-cols-2">
-          <PrimaryButton onClick={props.testToken} disabled={props.isBusy}>
-            <CheckCircle2 size={16} /> Testar
-          </PrimaryButton>
-          <PrimaryButton onClick={props.saveToken} disabled={props.isBusy}>
-            <Save size={16} /> Salvar
-          </PrimaryButton>
+            <PrimaryButton onClick={props.testToken} disabled={props.isBusy}>
+              <CheckCircle2 size={16} /> Testar Page Token
+            </PrimaryButton>
+            <PrimaryButton onClick={props.saveToken} disabled={props.isBusy}>
+              <Save size={16} /> Salvar Page Token
+            </PrimaryButton>
           </div>
         </div>
       </article>

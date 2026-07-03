@@ -208,6 +208,15 @@ async function getPageAccessTokenFromUserToken(userToken: string) {
   );
 }
 
+async function validateInstagramPageToken(pageToken: string) {
+  const env = getServerEnv();
+
+  await graphJson(env.META_INSTAGRAM_ACCOUNT_ID, {
+    fields: "id,username,name",
+    access_token: pageToken,
+  });
+}
+
 export async function getSavedMetaTokenStatus() {
   const supabase = createServiceRoleSupabaseClient();
   const { data, error } = await supabase
@@ -311,7 +320,9 @@ export async function saveMetaAccessToken(token: string) {
 export async function exchangeAndSaveMetaUserToken(userToken: string) {
   const longLivedUserToken = await exchangeForLongLivedUserToken(userToken);
   const pageToken = await getPageAccessTokenFromUserToken(longLivedUserToken.token);
+  await validateInstagramPageToken(pageToken.token);
   const saved = await saveMetaAccessToken(pageToken.token);
+  await updateMetaTokenTestStatus(null);
 
   return {
     ...saved,

@@ -525,13 +525,23 @@ export function AdminPanel() {
               Logado como {session.user?.name}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={logout}
-            className="inline-flex items-center gap-2 border border-[#1f1e1a]/10 bg-white/60 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] transition hover:border-[#ef2346] hover:text-[#ef2346]"
-          >
-            <LogOut size={15} /> Sair
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <a
+              href="/admin/metricas"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 border border-[#1f1e1a]/10 bg-white/60 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] transition hover:border-[#ef2346] hover:text-[#ef2346]"
+            >
+              <BarChart3 size={15} /> Ver painel analítico
+            </a>
+            <button
+              type="button"
+              onClick={logout}
+              className="inline-flex items-center gap-2 border border-[#1f1e1a]/10 bg-white/60 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] transition hover:border-[#ef2346] hover:text-[#ef2346]"
+            >
+              <LogOut size={15} /> Sair
+            </button>
+          </div>
         </header>
 
         <nav className="mb-6 flex flex-wrap gap-2">

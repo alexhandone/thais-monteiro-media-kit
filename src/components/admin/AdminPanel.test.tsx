@@ -66,6 +66,39 @@ describe("AdminPanel users form", () => {
     vi.restoreAllMocks();
   });
 
+  it("shows a direct admin-only metrics dashboard link", async () => {
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url === "/api/admin/session") {
+        return Promise.resolve(mockJson(sessionPayload));
+      }
+
+      if (url === "/api/admin/dashboard") {
+        return Promise.resolve(mockJson(dashboardPayload));
+      }
+
+      if (url === "/api/admin/users" && !init?.method) {
+        return Promise.resolve(mockJson(usersPayload));
+      }
+
+      if (url === "/api/admin/settings" && !init?.method) {
+        return Promise.resolve(mockJson(settingsPayload));
+      }
+
+      return Promise.resolve(mockJson({}, false));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<AdminPanel />);
+
+    const metricsLink = await screen.findByRole("link", {
+      name: /ver painel analítico/i,
+    });
+
+    expect(metricsLink).toHaveAttribute("href", "/admin/metricas");
+  });
+
   it("requires password confirmation and can reveal typed passwords", async () => {
     const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);

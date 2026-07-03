@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildGraphInsightTimeChunks,
   buildMediaInsightsParams,
   buildOverviewInsightRequests,
   collectOptionalGraphError,
@@ -150,6 +151,21 @@ describe("instagram refresh helpers", () => {
     expect(buildMediaInsightsParams()).toEqual({
       metric: "views,reach,likes,comments,shares,saved,total_interactions",
     });
+  });
+
+  it("splits Graph insight ranges longer than 30 days", () => {
+    const since = 1_000;
+    const thirtyOneDays = 31 * 24 * 60 * 60;
+
+    const chunks = buildGraphInsightTimeChunks(since, since + thirtyOneDays);
+
+    expect(chunks).toHaveLength(2);
+    expect(chunks.every((chunk) => chunk.until - chunk.since < thirtyOneDays)).toBe(
+      true,
+    );
+    expect(chunks[0]?.until - chunks[0]?.since).toBeLessThanOrEqual(
+      30 * 24 * 60 * 60,
+    );
   });
 
   it("limits media insights candidates to the first 50 recent items", () => {

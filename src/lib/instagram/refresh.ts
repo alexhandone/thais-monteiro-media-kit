@@ -62,6 +62,8 @@ type MonthRange = {
   end: Date;
 };
 
+const maxGraphInsightRangeSeconds = 30 * 24 * 60 * 60;
+
 function isoDate(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
@@ -107,6 +109,82 @@ function percentageChange(current: number, previous: number) {
   }
 
   return ((current - previous) / previous) * 100;
+}
+
+function mergeBreakdownItems(
+  first: InstagramOverviewMetrics["views_by_follower_type"],
+  second: InstagramOverviewMetrics["views_by_follower_type"],
+) {
+  const merged = new Map<string, number>();
+
+  for (const item of [...(first ?? []), ...(second ?? [])]) {
+    merged.set(item.label, (merged.get(item.label) ?? 0) + item.value);
+  }
+
+  return [...merged.entries()]
+    .map(([label, value]) => ({ label, value }))
+    .sort((left, right) => right.value - left.value);
+}
+
+function mergeOverviewMetrics(
+  first: InstagramOverviewMetrics,
+  second: InstagramOverviewMetrics,
+): InstagramOverviewMetrics {
+  return {
+    reach: first.reach + second.reach,
+    views: first.views + second.views,
+    profile_views: first.profile_views + second.profile_views,
+    profile_links_taps: first.profile_links_taps + second.profile_links_taps,
+    website_clicks: (first.website_clicks ?? 0) + (second.website_clicks ?? 0),
+    accounts_engaged: first.accounts_engaged + second.accounts_engaged,
+    total_interactions: first.total_interactions + second.total_interactions,
+    follows_and_unfollows:
+      first.follows_and_unfollows + second.follows_and_unfollows,
+    follows_and_unfollows_by_type: mergeBreakdownItems(
+      first.follows_and_unfollows_by_type,
+      second.follows_and_unfollows_by_type,
+    ),
+    views_by_follower_type: mergeBreakdownItems(
+      first.views_by_follower_type,
+      second.views_by_follower_type,
+    ),
+    views_by_media_product_type: mergeBreakdownItems(
+      first.views_by_media_product_type,
+      second.views_by_media_product_type,
+    ),
+  };
+}
+
+function emptyOverviewMetrics(): InstagramOverviewMetrics {
+  return {
+    reach: 0,
+    views: 0,
+    profile_views: 0,
+    profile_links_taps: 0,
+    website_clicks: 0,
+    accounts_engaged: 0,
+    total_interactions: 0,
+    follows_and_unfollows: 0,
+    follows_and_unfollows_by_type: [],
+    views_by_follower_type: [],
+    views_by_media_product_type: [],
+  };
+}
+
+export function buildGraphInsightTimeChunks(since: number, until: number) {
+  const chunks: Array<{ since: number; until: number }> = [];
+  let cursor = since;
+
+  while (cursor < until) {
+    const chunkUntil = Math.min(
+      cursor + maxGraphInsightRangeSeconds - 1,
+      until,
+    );
+    chunks.push({ since: cursor, until: chunkUntil });
+    cursor = chunkUntil + 1;
+  }
+
+  return chunks;
 }
 
 export function buildOverviewInsightRequests(
@@ -294,6 +372,43 @@ async function getOptionalAccountInsights(
   };
 }
 
+async function getOptionalAccountInsightsChunked(
+  accountId: string,
+  since: number,
+  until: number,
+  errors: Record<string, string[]>,
+) {
+  const chunks = buildGraphInsightTimeChunks(since, until);
+
+  if (chunks.length <= 1) {
+    return getOptionalAccountInsights(accountId, since, until, errors);
+  }
+
+  let metrics = emptyOverviewMetrics();
+  const raw: Array<{
+    since: number;
+    until: number;
+    payload: Record<string, unknown>;
+  }> = [];
+
+  for (const chunk of chunks) {
+    const result = await getOptionalAccountInsights(
+      accountId,
+      chunk.since,
+      chunk.until,
+      errors,
+    );
+
+    metrics = mergeOverviewMetrics(metrics, result.metrics);
+    raw.push({ ...chunk, payload: result.raw });
+  }
+
+  return {
+    metrics,
+    raw: { chunks: raw },
+  };
+}
+
 async function getOptionalDemographics(
   accountId: string,
   errors: Record<string, string[]>,
@@ -333,13 +448,13 @@ async function getOptionalClosedMonthGrowth(
 ) {
   const previousMonth = closedMonthRange(reference, 1);
   const comparisonMonth = closedMonthRange(reference, 2);
-  const previousMonthInsights = await getOptionalAccountInsights(
+  const previousMonthInsights = await getOptionalAccountInsightsChunked(
     accountId,
     unixSeconds(previousMonth.start),
     unixSeconds(previousMonth.end),
     errors,
   );
-  const comparisonMonthInsights = await getOptionalAccountInsights(
+  const comparisonMonthInsights = await getOptionalAccountInsightsChunked(
     accountId,
     unixSeconds(comparisonMonth.start),
     unixSeconds(comparisonMonth.end),

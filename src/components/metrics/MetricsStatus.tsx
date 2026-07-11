@@ -29,7 +29,8 @@ export function MetricsStatus({
           {ctaHref && ctaLabel ? (
             <a
               href={ctaHref}
-              className="mt-7 inline-flex rounded-full bg-foreground px-6 py-3 text-sm font-semibold text-paper transition hover:bg-accent"
+              className="mt-7 inline-flex rounded-full bg-foreground px-6 py-3 text-sm font-semibold text-white transition hover:bg-accent hover:text-white"
+              style={{ color: "#ffffff" }}
             >
               {ctaLabel}
             </a>

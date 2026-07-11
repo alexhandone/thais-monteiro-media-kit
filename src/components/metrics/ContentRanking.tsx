@@ -83,6 +83,9 @@ function metricTotal(items: RankedContentItem[], key: MetricKey) {
 
 export function ContentRanking({ items }: ContentRankingProps) {
   const [activeMetric, setActiveMetric] = useState<MetricKey>("views");
+  const [brokenThumbnailIds, setBrokenThumbnailIds] = useState<Set<string>>(
+    () => new Set(),
+  );
 
   const totals = useMemo(
     () =>
@@ -204,12 +207,20 @@ export function ContentRanking({ items }: ContentRankingProps) {
                 className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)] gap-3 rounded-lg border border-border-soft bg-paper p-3 sm:grid-cols-[5.5rem_minmax(0,1fr)_8rem] sm:p-4"
               >
                 <div className="relative aspect-square overflow-hidden rounded-md bg-background">
-                  {item.thumbnail_url || item.media_url ? (
+                  {!brokenThumbnailIds.has(item.id) ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={item.thumbnail_url ?? item.media_url ?? ""}
+                      src={`/api/instagram/media-thumbnail?id=${encodeURIComponent(item.id)}`}
                       alt=""
                       className="h-full w-full object-cover"
+                      loading="lazy"
+                      onError={() =>
+                        setBrokenThumbnailIds((current) => {
+                          const next = new Set(current);
+                          next.add(item.id);
+                          return next;
+                        })
+                      }
                     />
                   ) : (
                     <div className="grid h-full place-items-center text-muted">

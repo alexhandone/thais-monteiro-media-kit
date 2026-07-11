@@ -29,6 +29,61 @@ function formatNumber(value: number) {
   return numberFormatter.format(Number(value ?? 0));
 }
 
+function StoriesTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: Array<{
+    color?: string;
+    dataKey?: string | number;
+    name?: string | number;
+    value?: number | string;
+  }>;
+  label?: string;
+}) {
+  if (!active || !payload?.length) {
+    return null;
+  }
+
+  const items = payload
+    .map((item) => ({
+      ...item,
+      numericValue: Number(item.value ?? 0),
+    }))
+    .filter((item) => item.numericValue > 0);
+
+  if (!items.length) {
+    return null;
+  }
+
+  return (
+    <div className="rounded-lg border border-border-soft bg-paper px-3 py-2 text-xs shadow-lg">
+      {label ? <p className="mb-2 font-semibold text-foreground">{label}</p> : null}
+      <div className="grid gap-1">
+        {items.map((item) => (
+          <p
+            key={String(item.dataKey ?? item.name)}
+            className="flex items-center justify-between gap-4 text-muted"
+          >
+            <span className="inline-flex items-center gap-2">
+              <span
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: item.color ?? "#ef1f3d" }}
+              />
+              {String(item.name ?? item.dataKey)}
+            </span>
+            <strong className="font-semibold text-foreground">
+              {formatNumber(item.numericValue)}
+            </strong>
+          </p>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function StoriesInsights({ stories }: StoriesInsightsProps) {
   const cards = [
     {
@@ -126,13 +181,7 @@ export function StoriesInsights({ stories }: StoriesInsightsProps) {
                 width={54}
                 tickFormatter={(value) => formatNumber(Number(value))}
               />
-              <Tooltip
-                formatter={(value, name) => [
-                  formatNumber(Number(value)),
-                  name === "linkClicks" ? "Cliques em links" : "Visualizações",
-                ]}
-                contentStyle={{ borderRadius: 8, borderColor: "rgba(62,60,54,0.18)" }}
-              />
+              <Tooltip content={<StoriesTooltip />} />
               <Area
                 type="monotone"
                 dataKey="views"

@@ -1,102 +1,160 @@
-import { ArrowDownRight, AtSign, MapPin, Sparkle } from "lucide-react";
+"use client";
+
+import { ArrowDownRight, AtSign, Baby, House, Shirt, Sparkles } from "lucide-react";
+import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
+import { useRef } from "react";
 
 import { siteContent } from "@/lib/content";
-import { MotionReveal } from "@/components/shared/MotionReveal";
 
 export function HeroSection() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const reduceMotion = useReducedMotion();
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"],
+  });
+  const imageY = useTransform(scrollYProgress, [0, 1], [0, reduceMotion ? 0 : 90]);
+  const typeY = useTransform(scrollYProgress, [0, 1], [0, reduceMotion ? 0 : -52]);
+
   return (
     <section
+      ref={sectionRef}
       id="inicio"
-      className="relative isolate min-h-screen overflow-hidden bg-background px-5 pb-10 pt-24 sm:px-8 sm:pt-28 lg:px-10 lg:pt-32"
+      className="hero-editorial relative isolate min-h-[100svh] overflow-hidden bg-[#e8e6e1] text-[#1d1c19]"
     >
-      <div
-        className="pointer-events-none absolute inset-0 -z-10 opacity-80"
+      <div className="hero-editorial__noise pointer-events-none absolute inset-0 z-0" aria-hidden="true" />
+      <div className="pointer-events-none absolute bottom-0 left-0 z-0 h-[16svh] w-full bg-accent sm:h-[12svh] lg:h-[9svh]" aria-hidden="true" />
+
+      <motion.div
+        style={{ y: typeY }}
+        className="pointer-events-none absolute inset-x-0 top-[28svh] z-[1] flex select-none flex-col items-center font-display text-[clamp(6.5rem,25vw,17rem)] font-normal leading-[0.59] text-[#1d1c19]/10 sm:top-[24svh] sm:text-[clamp(7.4rem,22vw,17rem)] lg:left-[34vw] lg:right-auto lg:top-[18svh] lg:items-start lg:text-[clamp(9rem,14.5vw,15rem)] lg:text-[#1d1c19]/[0.08]"
         aria-hidden="true"
       >
-        <div className="absolute -left-24 top-16 h-72 w-72 rounded-full bg-accent/18 blur-3xl" />
-        <div className="absolute right-0 top-10 h-[34rem] w-[34rem] rounded-full bg-accent/18 blur-3xl" />
-        <div className="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-paper/70 blur-3xl" />
-        <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(244,241,236,0.72),rgba(216,214,208,0.34)_42%,rgba(62,60,54,0.16)),radial-gradient(circle_at_76%_42%,rgba(239,31,61,0.2),transparent_34%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(62,60,54,0.026)_1px,transparent_1px),linear-gradient(90deg,rgba(62,60,54,0.026)_1px,transparent_1px)] bg-[size:42px_42px]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(62,60,54,0.07)_1px,transparent_1.5px)] bg-[size:22px_22px] opacity-18" />
-      </div>
+        <span>Thais</span>
+        <span>Thais</span>
+        <span>Thais</span>
+      </motion.div>
 
-      <div className="pointer-events-none absolute inset-x-0 top-20 z-0 mx-auto h-[34rem] max-w-7xl sm:h-[42rem] lg:bottom-0 lg:top-24 lg:h-auto">
-        <p
-          className="absolute left-1/2 top-[1.5rem] w-[120vw] -translate-x-1/2 select-none text-center font-display text-[5.9rem] font-normal uppercase leading-[0.72] text-foreground/[0.12] sm:top-8 sm:text-[8.9rem] lg:top-1/2 lg:w-[54rem] lg:-translate-y-1/2 lg:text-[11.8rem]"
-          aria-hidden="true"
+      <div className="relative z-10 mx-auto min-h-[100svh] w-full max-w-[100rem] px-5 pb-8 pt-24 sm:px-8 sm:pt-28 lg:px-10 lg:pt-32">
+        <motion.div
+          initial={reduceMotion ? false : { opacity: 0, x: -24 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
+          className="absolute left-5 top-[15svh] z-30 flex items-center gap-3 text-[0.68rem] font-semibold tracking-[0.13em] text-[#514e47] sm:left-8 sm:top-[17svh] lg:left-10 lg:top-[19svh]"
         >
-          Thais
-          <br />
-          Thais
-          <br />
-          Thais
-        </p>
+          <span>{siteContent.handle}</span>
+          <span className="h-px w-8 bg-accent" aria-hidden="true" />
+          <span>{siteContent.location}</span>
+        </motion.div>
 
-        <Sparkle
-          className="absolute right-[12%] top-[26%] text-accent/80 sm:right-[18%] lg:right-[23%] lg:top-[27%]"
-          size={28}
-          aria-hidden="true"
-        />
+        <motion.div
+          style={{ y: imageY }}
+          initial={reduceMotion ? false : { clipPath: "inset(0 0 100% 0)", opacity: 0.65 }}
+          animate={{ clipPath: "inset(0 0 0% 0)", opacity: 1 }}
+          transition={{ duration: 1.35, ease: [0.16, 1, 0.3, 1], delay: 0.08 }}
+          className="pointer-events-none absolute inset-x-0 bottom-[5svh] z-10 mx-auto flex h-[79svh] items-end justify-center sm:bottom-[5svh] sm:h-[82svh] lg:bottom-[4svh] lg:left-[27vw] lg:right-auto lg:h-[86svh] lg:w-[42vw]"
+        >
+          <Image
+            src="/images/thais-hero.png"
+            alt="Thais Monteiro com conjunto vermelho em uma composição editorial"
+            width={1415}
+            height={1747}
+            priority
+            sizes="(min-width: 1024px) 44vw, (min-width: 640px) 62vw, 94vw"
+            className="h-full w-auto max-w-none object-contain object-bottom drop-shadow-[0_28px_30px_rgba(29,28,25,0.16)]"
+          />
+        </motion.div>
 
-        <Image
-          src="/images/thais-hero.png"
-          alt="Thais Monteiro"
-          width={450}
-          height={996}
-          priority
-          sizes="(min-width: 1024px) 500px, (min-width: 640px) 430px, 350px"
-          className="absolute left-1/2 top-4 h-[31rem] max-h-[66svh] w-auto -translate-x-1/2 object-contain drop-shadow-[0_34px_45px_rgba(36,35,31,0.22)] sm:top-8 sm:h-[39rem] sm:max-h-[72svh] lg:bottom-0 lg:top-auto lg:h-[49rem] lg:max-h-[88svh]"
-        />
-      </div>
-
-      <div className="mx-auto flex min-h-[calc(100svh-6rem)] w-full max-w-7xl items-start pb-5 pt-[30rem] sm:pt-[36rem] lg:min-h-[calc(100svh-8rem)] lg:items-center lg:pb-0 lg:pt-0">
-        <div className="relative z-20 w-full max-w-[35rem] text-charcoal lg:max-w-[30rem]">
-          <MotionReveal
-            delay={0.06}
-            className="mb-4 flex flex-wrap items-center gap-3 text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-muted sm:text-sm"
-          >
-            <span>{siteContent.handle}</span>
-            <span className="h-px w-10 bg-accent" aria-hidden="true" />
-            <span className="inline-flex items-center gap-2">
-              <MapPin size={15} aria-hidden="true" />
-              {siteContent.location}
-            </span>
-          </MotionReveal>
-          <MotionReveal
-            delay={0.13}
-            className="grid gap-4 rounded-[1.4rem] border border-white/35 bg-white/30 p-4 shadow-[0_18px_50px_rgba(36,35,31,0.08)] backdrop-blur-md sm:gap-5 sm:p-5 lg:mt-7 lg:gap-5 lg:border-transparent lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-0"
-          >
-            <h1 className="font-display text-2xl font-normal leading-none text-charcoal sm:text-5xl lg:text-5xl">
+        <motion.div
+          initial={reduceMotion ? false : { opacity: 0, y: 32 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1], delay: 0.65 }}
+          className="absolute bottom-[5svh] left-5 z-30 w-[min(87vw,27rem)] sm:bottom-[6svh] sm:left-8 lg:bottom-[14svh] lg:left-10 lg:w-[26vw] lg:min-w-[22rem] lg:max-w-[28rem]"
+        >
+          <div className="border-t border-[#1d1c19]/35 bg-[#e8e6e1]/94 px-5 pb-5 pt-5 backdrop-blur-[3px] sm:bg-transparent sm:px-0 sm:pb-0 sm:pt-5 sm:backdrop-blur-none">
+            <h1 className="max-w-[12ch] text-balance font-display text-[clamp(2rem,9vw,3.65rem)] font-normal leading-[0.93] text-[#1d1c19]">
               {siteContent.title}
             </h1>
-            <p className="max-w-xl text-sm leading-7 text-muted sm:text-base lg:text-base lg:leading-7">
+            <p className="mt-3 max-w-[38rem] text-pretty text-[0.78rem] font-medium leading-5 text-[#37342e] sm:mt-4 sm:text-sm sm:font-normal sm:leading-6 sm:text-[#514e47] lg:max-w-[29rem]">
               {siteContent.intro}
             </p>
-          </MotionReveal>
-          <MotionReveal
-            delay={0.22}
-            className="mt-5 grid gap-3 min-[380px]:flex min-[380px]:flex-wrap min-[380px]:items-center lg:mt-7"
-          >
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2 sm:mt-5">
             <a
               href="#metricas"
-              className="inline-flex h-12 items-center justify-center gap-3 rounded-full border border-border-soft bg-white/35 px-5 text-sm font-semibold text-charcoal backdrop-blur-md transition hover:bg-white/70"
+              className="group inline-flex h-10 items-center justify-center gap-2 rounded-full bg-[#1d1c19] px-4 text-xs font-semibold !text-white transition-colors duration-300 hover:bg-accent hover:!text-white sm:h-11 sm:px-5 sm:text-sm"
+              style={{ color: "#ffffff" }}
             >
               Liberar métricas
+              <ArrowDownRight className="size-4 transition-transform group-hover:translate-x-0.5 group-hover:translate-y-0.5" aria-hidden="true" />
             </a>
             <a
               href={siteContent.contact.instagram}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex h-12 items-center justify-center gap-3 rounded-full border border-border-soft bg-white/35 px-5 text-sm font-semibold text-charcoal backdrop-blur-md transition hover:bg-white/70"
+              aria-label="Abrir Instagram de Thais Monteiro"
+              className="group inline-flex size-10 items-center justify-center rounded-full border border-[#1d1c19]/35 text-[#1d1c19] transition-colors duration-300 hover:border-accent hover:bg-accent hover:text-white sm:size-11"
             >
-              <AtSign size={18} aria-hidden="true" />
-              Instagram
-              <ArrowDownRight size={16} aria-hidden="true" />
+              <AtSign className="size-4" aria-hidden="true" />
             </a>
-          </MotionReveal>
-        </div>
+          </div>
+        </motion.div>
+
+        <motion.aside
+          initial={reduceMotion ? false : { opacity: 0, x: 28 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1], delay: 0.8 }}
+          className="absolute right-8 top-1/2 z-30 hidden size-[17rem] -translate-y-1/2 text-[#1d1c19] lg:block xl:right-12 xl:size-[19rem]"
+          aria-label="Territórios de conteúdo"
+        >
+          <div className="absolute left-[12%] right-[12%] top-1/2 h-px bg-[#1d1c19]/20" aria-hidden="true" />
+          <div className="absolute bottom-[12%] left-1/2 top-[12%] w-px bg-[#1d1c19]/20" aria-hidden="true" />
+
+          <div className="absolute left-1/2 top-1/2 z-10 flex size-24 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border border-[#1d1c19]/35 bg-[#e8e6e1]/80 text-center text-[#1d1c19] backdrop-blur-[2px] xl:size-28">
+            <Sparkles className="mb-1 size-5" aria-hidden="true" />
+            <span className="font-display text-xl leading-none xl:text-2xl">Conteúdo</span>
+            <span className="text-[0.58rem] font-semibold tracking-[0.12em]">REAL</span>
+          </div>
+
+          <div className="absolute left-0 top-3 flex items-center gap-2.5">
+            <span className="flex size-9 items-center justify-center rounded-full border border-[#1d1c19]/20 bg-white/45 text-[#1d1c19]/75">
+              <Baby className="size-4" aria-hidden="true" />
+            </span>
+            <span className="text-xs font-medium">Maternidade</span>
+          </div>
+
+          <div className="absolute right-0 top-12 flex items-center gap-2.5">
+            <span className="text-xs font-medium">Lifestyle</span>
+            <span className="flex size-9 items-center justify-center rounded-full border border-[#1d1c19]/20 bg-white/45 text-[#1d1c19]/75">
+              <Sparkles className="size-4" aria-hidden="true" />
+            </span>
+          </div>
+
+          <div className="absolute bottom-10 left-1 flex items-center gap-2.5">
+            <span className="flex size-9 items-center justify-center rounded-full border border-[#1d1c19]/20 bg-white/45 text-[#1d1c19]/75">
+              <House className="size-4" aria-hidden="true" />
+            </span>
+            <span className="text-xs font-medium">Rotina real</span>
+          </div>
+
+          <div className="absolute bottom-0 right-2 flex items-center gap-2.5">
+            <span className="text-xs font-medium">Moda</span>
+            <span className="flex size-9 items-center justify-center rounded-full border border-[#1d1c19]/20 bg-white/45 text-[#1d1c19]/75">
+              <Shirt className="size-4" aria-hidden="true" />
+            </span>
+          </div>
+        </motion.aside>
+
+        <motion.p
+          initial={reduceMotion ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 1.05 }}
+          className="absolute bottom-3 right-5 z-30 text-[0.58rem] font-semibold tracking-[0.14em] text-white sm:right-8 lg:right-10 lg:text-[0.65rem]"
+        >
+          MEDIA KIT · 2026
+        </motion.p>
       </div>
     </section>
   );

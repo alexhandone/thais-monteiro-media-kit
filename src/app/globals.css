@@ -118,3 +118,23 @@ textarea {
   height: 0;
   display: none;
 }
+
+.hero-editorial__noise {
+  opacity: 0.42;
+  background-image: url("/textures/paper-grain.webp");
+  background-position: center;
+  background-repeat: repeat;
+  background-size: 620px 620px;
+  mix-blend-mode: multiply;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-editorial *,
+  .hero-editorial *::before,
+  .hero-editorial *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

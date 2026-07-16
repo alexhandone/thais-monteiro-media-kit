@@ -1,77 +1,100 @@
-import { Sparkle } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import Image from "next/image";
 
-import { siteContent } from "@/lib/content";
 import { InteractiveMarqueeCarousel } from "@/components/shared/InteractiveMarqueeCarousel";
 import { MotionReveal } from "@/components/shared/MotionReveal";
-
-import { SectionIntro } from "./SectionIntro";
+import { siteContent } from "@/lib/content";
 
 const differentialImages = [
-  "/images/differentials/comunicacao-com-humor-e-leveza.jpg",
-  "/images/differentials/alta-identificacao-com-o-publico-feminino.jpg",
-  "/images/differentials/storytelling-persuasivo.jpg",
-  "/images/differentials/autoridade-em-maternidade-e-lifestyle.jpg",
-  "/images/differentials/experiencia-com-marcas-reconhecidas.JPG",
+  { src: "/images/differentials/comunicacao-com-humor-e-leveza.jpg", position: "50% 48%" },
+  { src: "/images/differentials/alta-identificacao-com-o-publico-feminino.jpg", position: "50% 42%" },
+  { src: "/images/differentials/storytelling-persuasivo.jpg", position: "50% 42%" },
+  { src: "/images/differentials/autoridade-em-maternidade-e-lifestyle.jpg", position: "50% 48%" },
+  { src: "/images/differentials/experiencia-com-marcas-reconhecidas.JPG", position: "50% 38%" },
 ] as const;
 
 export function DifferentialsSection() {
   const differentialCards = siteContent.differentials.map((title, index) => ({
     title,
-    image: differentialImages[index],
+    ...differentialImages[index],
   }));
   const cards = [...differentialCards, ...differentialCards];
 
   return (
-    <section className="relative isolate overflow-hidden bg-paper px-5 py-20 text-foreground sm:px-8 lg:px-10 lg:py-28">
-      <div
-        className="pointer-events-none absolute inset-0 -z-10"
-        aria-hidden="true"
-      >
-        <div className="absolute -right-24 top-8 h-80 w-80 rounded-full bg-accent/10 blur-3xl" />
-        <div className="absolute bottom-0 left-0 h-80 w-80 rounded-full bg-background/80 blur-3xl" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(62,60,54,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(62,60,54,0.035)_1px,transparent_1px)] bg-[size:52px_52px]" />
-      </div>
+    <section
+      id="diferenciais"
+      className="relative isolate scroll-mt-24 overflow-hidden bg-[#e8e6e1] py-14 text-[#1d1c19] sm:py-16 lg:min-h-[100svh] lg:py-14"
+    >
+      <div className="editorial-light-grain pointer-events-none absolute inset-0 -z-10" aria-hidden="true" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[#1d1c19]/18" aria-hidden="true" />
 
-      <div className="mx-auto max-w-7xl">
-        <MotionReveal>
-          <SectionIntro
-            eyebrow="Diferenciais"
-            title="Narrativa feminina, leve e comercialmente aplicável."
-            copy="Um perfil construído em torno de confiança cotidiana, com linguagem próxima para campanhas de awareness, consideração e conversão."
-          />
-        </MotionReveal>
+      <div className="mx-auto max-w-[100rem] px-5 sm:px-8 lg:px-10">
+        <div className="grid items-end gap-7 border-b border-[#1d1c19]/20 pb-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(26rem,0.92fr)] lg:gap-16 lg:pb-8">
+          <MotionReveal>
+            <div className="flex items-center gap-4 text-sm font-semibold uppercase tracking-[0.16em] text-[#5d5a53]">
+              <Sparkles className="size-5 text-accent" strokeWidth={1.6} aria-hidden="true" />
+              <span>O que torna cada entrega única</span>
+            </div>
+            <h2 className="mt-4 max-w-[10ch] text-balance font-editorial text-[clamp(3.8rem,8vw,5.4rem)] font-normal leading-[0.84] tracking-[-0.03em]">
+              Diferenciais
+            </h2>
+          </MotionReveal>
 
-        <MotionReveal delay={0.12} className="mt-14">
-          <InteractiveMarqueeCarousel label="diferenciais">
+          <MotionReveal delay={0.1} className="lg:pb-1">
+            <p className="max-w-[23ch] font-editorial text-[1.7rem] font-normal leading-[1.02] sm:text-3xl lg:text-[2.25rem]">
+              Narrativa feminina, leve e comercialmente aplicável.
+            </p>
+            <div className="mt-5 flex max-w-[44rem] items-start gap-5">
+              <span className="mt-2 h-px w-14 shrink-0 bg-accent" aria-hidden="true" />
+              <p className="max-w-[58ch] text-sm leading-6 text-[#5d5a53] sm:text-base sm:leading-7">
+                Confiança construída no cotidiano, com uma linguagem próxima que conecta marcas a mulheres reais em diferentes momentos de decisão.
+              </p>
+            </div>
+          </MotionReveal>
+        </div>
+
+        <MotionReveal delay={0.16} className="mt-8">
+          <InteractiveMarqueeCarousel
+            label="diferenciais"
+            step={448}
+            className="-mx-5 sm:-mx-8 lg:-mx-10"
+            contentClassName="gap-3 px-5 sm:gap-5 sm:px-8 lg:gap-6 lg:px-10"
+          >
             {cards.map((item, index) => (
               <article
                 key={`${item.title}-${index}`}
-                className="group relative h-72 w-[17rem] shrink-0 overflow-hidden rounded-xl border border-border-soft bg-white/36 shadow-[0_18px_50px_rgba(36,35,31,0.08)] transition duration-300 hover:-translate-y-1 hover:border-accent/60 sm:w-[19rem]"
+                className="group relative h-[24rem] w-[17rem] shrink-0 overflow-hidden bg-[#24221f] sm:h-[29rem] sm:w-[21rem] lg:h-[30rem] lg:w-[24rem]"
               >
                 <Image
-                  src={item.image}
+                  src={item.src}
                   alt={item.title}
                   fill
-                  priority={index < differentialCards.length}
-                  sizes="(min-width: 640px) 19rem, 17rem"
-                  className="object-cover transition duration-500 group-hover:scale-105"
+                  priority={index < 3}
+                  sizes="(min-width: 1024px) 24rem, (min-width: 640px) 21rem, 17rem"
+                  style={{ objectPosition: item.position }}
+                  className="object-cover saturate-[0.82] transition-[transform,filter] duration-700 ease-out group-hover:scale-[1.035] group-hover:saturate-100"
                 />
+
                 <div
-                  className="absolute inset-0 bg-gradient-to-t from-foreground/88 via-foreground/26 to-transparent"
+                  className="absolute inset-0 bg-[linear-gradient(180deg,rgba(20,19,17,0.04)_28%,rgba(20,19,17,0.18)_56%,rgba(20,19,17,0.94)_100%)]"
                   aria-hidden="true"
                 />
-                <div className="absolute inset-x-0 top-0 flex items-center justify-between p-5">
-                  <span className="h-px w-16 bg-accent/70" aria-hidden="true" />
-                  <Sparkle
-                    className="text-paper transition group-hover:scale-110"
-                    size={22}
-                    aria-hidden="true"
-                  />
+                <div
+                  className="absolute inset-x-0 bottom-0 h-1 origin-left scale-x-0 bg-accent transition-transform duration-500 ease-out group-hover:scale-x-100"
+                  aria-hidden="true"
+                />
+
+                <div className="absolute inset-x-0 top-0 flex items-center justify-between p-5 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-white/86 sm:p-6">
+                  <span>Thais Monteiro</span>
+                  <Sparkles className="size-5 text-white" strokeWidth={1.5} aria-hidden="true" />
                 </div>
-                <h3 className="absolute inset-x-0 bottom-0 p-5 text-xl font-semibold leading-snug text-paper">
-                  {item.title}
-                </h3>
+
+                <div className="absolute inset-x-0 bottom-0 p-6 text-white sm:p-7">
+                  <span className="mb-5 block h-px w-12 bg-accent" aria-hidden="true" />
+                  <h3 className="max-w-[13ch] text-balance font-editorial text-[1.9rem] font-normal leading-[0.94] tracking-[-0.025em] sm:text-[2.25rem]">
+                    {item.title}
+                  </h3>
+                </div>
               </article>
             ))}
           </InteractiveMarqueeCarousel>

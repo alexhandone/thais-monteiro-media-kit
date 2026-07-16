@@ -128,6 +128,25 @@ textarea {
   mix-blend-mode: multiply;
 }
 
+.editorial-dark-grain {
+  opacity: 0.18;
+  background-image: url("/textures/paper-grain.webp");
+  background-position: center;
+  background-repeat: repeat;
+  background-size: 620px 620px;
+  filter: invert(1) contrast(1.2);
+  mix-blend-mode: soft-light;
+}
+
+.editorial-light-grain {
+  opacity: 0.42;
+  background-image: url("/textures/paper-grain.webp");
+  background-position: center;
+  background-repeat: repeat;
+  background-size: 360px 360px;
+  mix-blend-mode: multiply;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-editorial *,
   .hero-editorial *::before,

@@ -1,11 +1,9 @@
 import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 
-import { siteContent } from "@/lib/content";
 import { InteractiveMarqueeCarousel } from "@/components/shared/InteractiveMarqueeCarousel";
 import { MotionReveal } from "@/components/shared/MotionReveal";
-
-import { SectionIntro } from "./SectionIntro";
+import { siteContent } from "@/lib/content";
 
 const partnerImages: Record<string, string> = {
   "@dra.mileneribeiro": "/images/partners/@dra.mileneribeiro.jpg",
@@ -34,29 +32,38 @@ export function PartnersSection() {
   return (
     <section
       id="parcerias"
-      className="relative isolate overflow-hidden bg-foreground px-5 py-20 text-paper sm:px-8 lg:px-10 lg:py-28"
+      className="relative isolate flex min-h-[100svh] scroll-mt-24 flex-col justify-center overflow-hidden border-t border-paper/10 bg-[#1b1a17] py-16 text-paper sm:py-20 lg:py-14"
     >
-      <div
-        className="pointer-events-none absolute inset-0 -z-10"
-        aria-hidden="true"
-      >
-        <div className="absolute -left-20 top-8 h-80 w-80 rounded-full bg-paper/8 blur-3xl" />
-        <div className="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-accent/12 blur-3xl" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(244,241,236,0.016)_1px,transparent_1px),linear-gradient(90deg,rgba(244,241,236,0.016)_1px,transparent_1px)] bg-[size:52px_52px]" />
-      </div>
+      <div className="editorial-dark-grain pointer-events-none absolute inset-0 -z-10" aria-hidden="true" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-px bg-gradient-to-r from-transparent via-accent/60 to-transparent" aria-hidden="true" />
 
-      <div className="mx-auto max-w-7xl">
-        <MotionReveal>
-          <SectionIntro
-            eyebrow="Parcerias"
-            title="Marcas que já passaram pela narrativa da Thais."
-            copy="Histórico de colaborações com negócios locais, marcas de beleza, maternidade, bem-estar e serviços que conversam com a rotina da audiência."
-            tone="dark"
-          />
+      <div className="mx-auto w-full max-w-[100rem] px-5 sm:px-8 lg:px-10">
+        <MotionReveal className="grid gap-7 border-b border-paper/14 pb-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-end lg:gap-16 lg:pb-9">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent sm:text-sm">Parcerias</p>
+            <h2 className="mt-3 max-w-[10ch] text-balance font-display text-[clamp(3rem,6vw,5.8rem)] font-normal leading-[0.88] text-paper">
+              Marcas que entram na história.
+            </h2>
+          </div>
+
+          <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
+            <p className="max-w-2xl text-pretty text-sm leading-7 text-paper/68 sm:text-base">
+              Colaborações em beleza, maternidade, bem-estar e serviços que se
+              conectam à rotina da audiência com contexto, verdade e presença.
+            </p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-paper/45">
+              Deslize para explorar
+            </p>
+          </div>
         </MotionReveal>
 
-        <MotionReveal delay={0.12} className="mt-14">
-          <InteractiveMarqueeCarousel label="parcerias" tone="dark">
+        <MotionReveal delay={0.1} className="mt-7 lg:mt-8">
+          <InteractiveMarqueeCarousel
+            label="parcerias"
+            tone="dark"
+            step={360}
+            contentClassName="gap-3 sm:gap-4"
+          >
             {cards.map((partner, index) => (
               <a
                 key={`${partner}-${index}`}
@@ -65,33 +72,28 @@ export function PartnersSection() {
                 rel="noreferrer"
                 aria-label={`Abrir Instagram ${partner}`}
                 draggable={false}
-                className="group relative h-72 w-[17rem] shrink-0 overflow-hidden rounded-xl border border-paper/14 bg-white/7 shadow-[0_18px_50px_rgba(0,0,0,0.14)] backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-accent/70 sm:w-[19rem]"
+                className="group relative h-[21rem] w-[16rem] shrink-0 overflow-hidden bg-charcoal sm:h-[23rem] sm:w-[18rem] lg:h-[25rem] lg:w-[20rem]"
               >
                 {partnerImages[partner] ? (
                   <Image
                     src={partnerImages[partner]}
                     alt={partner}
                     fill
-                    priority={index < 5}
-                    sizes="(min-width: 640px) 19rem, 17rem"
-                    className="object-cover transition duration-500 group-hover:scale-105"
+                    priority={index < 4}
+                    sizes="(min-width: 1024px) 20rem, (min-width: 640px) 18rem, 16rem"
+                    className="object-cover transition duration-700 ease-out group-hover:scale-[1.035]"
                   />
                 ) : null}
-                <div
-                  className="absolute inset-0 bg-gradient-to-t from-foreground via-foreground/34 to-transparent"
-                  aria-hidden="true"
-                />
-                <div className="absolute inset-x-0 top-0 flex items-center justify-between p-5">
-                  <span className="h-px w-16 bg-accent/70" aria-hidden="true" />
-                  <ArrowUpRight
-                    className="text-paper transition group-hover:translate-x-1 group-hover:-translate-y-1"
-                    size={22}
-                    aria-hidden="true"
-                  />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/86 via-black/8 to-black/10" aria-hidden="true" />
+                <span className="absolute right-4 top-4 grid size-10 place-items-center rounded-full bg-paper text-foreground transition duration-300 group-hover:bg-accent group-hover:text-paper">
+                  <ArrowUpRight size={18} aria-hidden="true" />
+                </span>
+                <div className="absolute inset-x-0 bottom-0 p-5">
+                  <span className="mb-3 block h-px w-10 bg-accent transition-all duration-500 group-hover:w-full" aria-hidden="true" />
+                  <h3 className="min-w-0 break-words text-base font-semibold leading-snug text-paper [overflow-wrap:anywhere] sm:text-lg">
+                    {partner}
+                  </h3>
                 </div>
-                <h3 className="absolute inset-x-0 bottom-0 min-w-0 break-words p-5 text-lg font-semibold leading-snug text-paper [overflow-wrap:anywhere] sm:text-xl">
-                  {partner}
-                </h3>
               </a>
             ))}
           </InteractiveMarqueeCarousel>

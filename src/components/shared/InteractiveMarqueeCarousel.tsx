@@ -1,5 +1,6 @@
 "use client";
 
+import { useReducedMotion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   type MouseEvent,
@@ -41,6 +42,7 @@ export function InteractiveMarqueeCarousel({
   const interactionTimeoutRef = useRef<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     const track = trackRef.current;
@@ -55,7 +57,7 @@ export function InteractiveMarqueeCarousel({
       const delta = time - previousTime;
       previousTime = time;
 
-      if (!isPaused && !isDragging) {
+      if (!reduceMotion && !isPaused && !isDragging) {
         const loopPoint = track.scrollWidth / 2;
         track.scrollLeft += delta * AUTO_SCROLL_SPEED;
 
@@ -70,7 +72,7 @@ export function InteractiveMarqueeCarousel({
     animationFrame = window.requestAnimationFrame(tick);
 
     return () => window.cancelAnimationFrame(animationFrame);
-  }, [isDragging, isPaused]);
+  }, [isDragging, isPaused, reduceMotion]);
 
   useEffect(() => {
     return () => {

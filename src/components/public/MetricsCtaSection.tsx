@@ -1,81 +1,54 @@
 import { CalendarClock, Eye, ShieldCheck } from "lucide-react";
 
-import { siteContent } from "@/lib/content";
 import { MotionReveal } from "@/components/shared/MotionReveal";
+import { siteContent } from "@/lib/content";
 
 import { MetricsLeadForm } from "./MetricsLeadForm";
 
 export function MetricsCtaSection() {
   const { metricsCta } = siteContent;
   const highlights = [
-    {
-      icon: Eye,
-      label: "Instagram",
-      text: "Alcance, visualizações, perfil e conteúdos recentes.",
-    },
-    {
-      icon: CalendarClock,
-      label: "Últimos 30 dias",
-      text: "Leitura pensada para campanhas e propostas atuais.",
-    },
-    {
-      icon: ShieldCheck,
-      label: "Acesso controlado",
-      text: "Link válido por 7 dias após preencher o formulário.",
-    },
+    { icon: Eye, label: "Dados reais", text: "Alcance, visualizações, audiência e conteúdos." },
+    { icon: CalendarClock, label: "Últimos 30 dias", text: "Uma leitura atual para decisões de campanha." },
+    { icon: ShieldCheck, label: "Acesso reservado", text: "Link individual válido por sete dias." },
   ];
 
   return (
     <section
       id="metricas"
-      className="relative isolate overflow-hidden bg-background px-5 py-20 sm:px-8 lg:px-10 lg:py-28"
+      className="relative isolate flex min-h-[100svh] scroll-mt-24 flex-col justify-center overflow-hidden border-t border-foreground/10 bg-[#f0efec] px-5 py-16 sm:px-8 sm:py-20 lg:px-10 lg:py-14"
     >
-      <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
-        <div className="absolute -left-24 top-16 h-80 w-80 rounded-full bg-accent/10 blur-3xl" />
-        <div className="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-paper/85 blur-3xl" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(62,60,54,0.024)_1px,transparent_1px),linear-gradient(90deg,rgba(62,60,54,0.024)_1px,transparent_1px)] bg-[size:52px_52px]" />
-      </div>
+      <div className="editorial-light-grain pointer-events-none absolute inset-0 -z-10 opacity-30" aria-hidden="true" />
 
-      <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.88fr_1fr] lg:items-end">
-        <MotionReveal>
-          <div className="max-w-2xl">
-            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-accent">
-              {metricsCta.eyebrow}
-            </p>
-            <h2 className="font-display text-4xl font-normal leading-none text-foreground sm:text-6xl">
+      <div className="mx-auto grid w-full max-w-[92rem] gap-8 lg:grid-cols-2 lg:items-end lg:gap-20">
+        <MotionReveal className="flex h-full flex-col justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent sm:text-sm">Métricas</p>
+            <h2 className="mt-3 max-w-[10ch] text-balance font-display text-[clamp(2.8rem,5.5vw,5.2rem)] font-normal leading-[0.9] text-foreground lg:max-w-[16ch]">
               {metricsCta.title}
             </h2>
-            <p className="mt-6 max-w-xl text-base leading-8 text-muted sm:text-lg">
+            <p className="mt-5 max-w-xl text-pretty text-sm leading-6 text-muted sm:text-base sm:leading-7">
               {metricsCta.body}
             </p>
           </div>
 
-          <div className="mt-10 grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+          <div className="mt-7 grid grid-cols-3 border-y border-foreground/18 lg:mt-10 lg:block lg:border-b-0">
             {highlights.map(({ icon: Icon, label, text }) => (
-              <div
-                key={label}
-                className="flex gap-4 rounded-xl border border-border-soft bg-white/28 p-4 shadow-[0_18px_50px_rgba(36,35,31,0.04)] backdrop-blur-sm"
-              >
-                <div className="mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent text-paper">
+              <div key={label} className="grid gap-2 border-r border-foreground/18 px-2 py-3 last:border-r-0 lg:grid-cols-[auto_1fr] lg:gap-4 lg:border-b lg:border-r-0 lg:px-0 lg:py-4">
+                <span className="grid size-8 place-items-center rounded-full bg-accent/10 text-accent lg:size-9">
                   <Icon size={17} aria-hidden="true" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-charcoal">{label}</h3>
-                  <p className="mt-1 text-sm leading-6 text-muted">{text}</p>
+                </span>
+                <div className="sm:grid sm:grid-cols-[9rem_1fr] sm:items-baseline sm:gap-4">
+                  <h3 className="text-[0.7rem] font-semibold leading-tight text-foreground sm:text-xs lg:text-sm">{label}</h3>
+                  <p className="mt-1 hidden text-sm leading-6 text-muted sm:mt-0 lg:block">{text}</p>
                 </div>
               </div>
             ))}
           </div>
         </MotionReveal>
 
-        <MotionReveal delay={0.12} className="lg:self-end">
-          <div className="relative">
-            <div
-              className="absolute -right-4 -top-4 h-28 w-28 rounded-full border border-accent/30"
-              aria-hidden="true"
-            />
-            <MetricsLeadForm submitLabel={metricsCta.buttonLabel} />
-          </div>
+        <MotionReveal delay={0.1}>
+          <MetricsLeadForm submitLabel={metricsCta.buttonLabel} />
         </MotionReveal>
       </div>
     </section>
